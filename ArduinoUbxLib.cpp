@@ -10,33 +10,6 @@ UbxGps::UbxGps () {
 };
 
 /* ****************************************************************************
-  checkChecksum: calculates the checksum according to 8-Bit Fletcher Algorithm.
-  ****************************************************************************/
-// unsigned short UbxGps::calcChecksum (UbxPacket* packet) {
-//   byte CK_A = 0, CK_B = 0;
-//   
-//   pInfo pi = packet->toArray ();
-//   
-//   for (unsigned int i = 2; i < pi.len; i++) {
-//      CK_A = CK_A + pi.ptr[i];
-//      CK_B = CK_B + CK_A;
-//   }
-//  
-//   unsigned short checksum = CK_A;
-//   checksum = checksum << 8;
-//   checksum |= CK_B;
-//   
-//   return checksum;
-// };
-
-/* ****************************************************************************
-  checkChecksum:
-  ****************************************************************************/
-// bool UbxGps::checkChecksum (UbxPacket* packet) {
-//   return (calcChecksum (packet) == packet->checksum);
-// };
-
-/* ****************************************************************************
   handleUbxPacket:
   ****************************************************************************/
 void UbxGps::handleUbxPacket () {

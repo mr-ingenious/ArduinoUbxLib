@@ -3,12 +3,12 @@
 
 #include "Arduino.h"
 
+/* ************************************************************************* */
 struct UbxCfgMsgMTPayload {
 	unsigned short cfgMsgClsID = 0;
 	byte rate[6] = {0};
 };
 
-/* ************************************************************************* */
 class UbxCfgMsgMT: public UbxPacket {
 	private:
 		void payloadToArray (byte* buffer, unsigned short bLen) {							
@@ -32,11 +32,12 @@ class UbxCfgMsgMT: public UbxPacket {
 		};
 };
 
+/* ************************************************************************* */
 struct UbxCfgMsgPayload {
 	unsigned short cfgMsgClsID = 0;
 	byte rate = 0;
 };
-/* ************************************************************************* */
+
 class UbxCfgMsg: public UbxPacket {
 	private:
 		void payloadToArray (byte* buffer, unsigned short bLen) {

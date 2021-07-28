@@ -234,6 +234,7 @@ class UbxNavSol: public UbxPacket {
 		};
 };
 
+/* ************************************************************************* */
 struct UbxNavTimeUTCPayload {
 	unsigned int iTOW = 0;
     unsigned int tAcc = 0;

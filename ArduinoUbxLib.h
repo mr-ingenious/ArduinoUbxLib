@@ -61,8 +61,7 @@ class UbxGps {
     byte inBuf[__inBufLen] = { 0 };
     
     void resetParser ();
-    // unsigned short calcChecksum (UbxPacket* packet);
-    // bool checkChecksum (UbxPacket* packet);
+
     void handleUbxPacket ();
     void handleNMEA_GPMsg ();
     void handleNMEA_PUBXMsg ();
