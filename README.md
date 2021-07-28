@@ -1,2 +1,2 @@
 # ArduinoUbxLib
-A library for arduino to communicate ublox recievers via the ubx protocol
+A library for arduino to communicate ublox receivers via the ubx protocol.
