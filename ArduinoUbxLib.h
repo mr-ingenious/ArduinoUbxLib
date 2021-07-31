@@ -6,6 +6,8 @@
 #include "UbxCfgMsg.h"
 #include "UbxNavMsg.h"
 
+#include "UbxNMEA.h"
+
 #include "Arduino.h"
 
 
