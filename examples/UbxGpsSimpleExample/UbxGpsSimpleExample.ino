@@ -19,9 +19,10 @@ const int PIN_DISPLAY_DC  = 17;
 const int PIN_DISPLAY_RES = 6;
 U8G2_SH1106_128X64_NONAME_F_4W_HW_SPI display (U8G2_R0, PIN_DISPLAY_CS, PIN_DISPLAY_DC, PIN_DISPLAY_RES);
 
-const unsigned int DEFAULT_PAGE_CYCLE_TIME = 5000;
-const unsigned int DEFAULT_PAGE_UPDATE_INTERVAL = 250;
+const unsigned int DEFAULT_PAGE_CYCLE_TIME = 5000; // ms
+const unsigned int DEFAULT_PAGE_UPDATE_INTERVAL = 250; // ms
 const bool START_PAGE_CYCLING = true;
+const unsigned short DEFAULT_DISPLAY_INACTIVITY_TIMEOUT = 60; // seconds
 
 
 // -- 6 Button Module  -------------------------------------------
@@ -489,32 +490,45 @@ page DEFAULT_FIRST_PAGE = PAGE_TITLE;
 class PagingControl {
   private:
     bool pagingActive = START_PAGE_CYCLING;
-    unsigned long lastPageCycle = 0;
-    unsigned long lastPageUpdate = 0;
-    unsigned long lastPagingToggle = 0;
+    bool displayActive = true;
+    
+    unsigned long lastPageCycleTs = 0;
+    unsigned long lastPageUpdateTs = 0;
+    unsigned long lastPagingToggleTs = 0;
+    unsigned long lastUserActivityTs = 0;
+    unsigned long lastBrightnessChange = 0;
+    
     unsigned long pageCycleInterval = DEFAULT_PAGE_CYCLE_TIME;
     unsigned long pageUpdateInterval = DEFAULT_PAGE_UPDATE_INTERVAL;
     unsigned long pageToggleIntervalMin = 500;
     unsigned int brightness = 255;
-    unsigned long lastBrightnessChange = 0;
+    unsigned short displayInactivityTimeout = DEFAULT_DISPLAY_INACTIVITY_TIMEOUT * 1000;
+    
     page currentPage = DEFAULT_FIRST_PAGE;
 
     bool isPageCycleTimeout() {
-      if ((millis() - lastPageCycle) > pageCycleInterval)
+      if ((millis() - lastPageCycleTs) > pageCycleInterval)
         return true;
       else
         return false;
     }
 
     bool isPageUpdateTimeout() {
-      if ((millis() - lastPageUpdate) > pageUpdateInterval)
+      if ((millis() - lastPageUpdateTs) > pageUpdateInterval)
+        return true;
+      else
+        return false;
+    }
+
+    bool isUserInactiveTimeout() {
+      if ((millis() - lastUserActivityTs) > displayInactivityTimeout)
         return true;
       else
         return false;
     }
 
     void setNextPage(bool forwardPaging) {
-      lastPageCycle = millis();
+      lastPageCycleTs = millis();
 
       switch  (currentPage) {
         case PAGE_TITLE:
@@ -705,84 +719,109 @@ class PagingControl {
 
   public:
     PagingControl() {
-      lastPageCycle = millis() + pageCycleInterval;
-      lastPageUpdate = millis() + pageUpdateInterval;
-      lastPagingToggle = millis() + pageToggleIntervalMin;
+      lastPageCycleTs = millis() + pageCycleInterval;
+      lastPageUpdateTs = millis() + pageUpdateInterval;
+      lastPagingToggleTs = millis() + pageToggleIntervalMin;
+      lastUserActivityTs = millis();
     }
 
     void updateDisplay() {
-      if (isPageCycleTimeout() && pagingActive) {
-        setNextPage(true);
+      if (isUserInactiveTimeout()) {
+        if (displayActive) {
+          Serial.println (F("updateDisplay: user inactive, switching off display ..."));
+          display.setPowerSave (1);
+          displayActive = false;
+        }
+      } else {
+        if (!displayActive) {
+          Serial.println (F("updateDisplay: user inactive, switching on display ..."));
+          display.setPowerSave (0);
+        }
+        
+        displayActive = true;
       }
 
-      if (isPageUpdateTimeout()) {
-        lastPageUpdate = millis();
-        switch (currentPage) {
-          case PAGE_TITLE:
-            drawTitleInfo();
-            break;
-            
-          case PAGE_DATETIME:
-            drawDateTimeInfo();
-            break;
-            
-          case PAGE_POSITION:
-            drawPositionInfo();
-            break;
-            
-          case PAGE_GPSINFO:
-            drawGPSInfo();
-            break;
-
-          case PAGE_BATTERY:
-            drawBatteryInfo();
-            break;
+      if (displayActive) {
+        if (isPageCycleTimeout() && pagingActive) {
+          setNextPage(true);
         }
-
-        if (!pagingActive) {
-          // drawPagingStoppedIndication();
-        }
-
-        unsigned int brightness_new  = 255;
-        if ((millis() - lastBrightnessChange > 5000) &&
-            (brightness_new >= 0) && (brightness_new <= 255) &&
-            ((brightness_new >= brightness + 25) || (brightness_new <= brightness - 25))) {
-          brightness = brightness_new;
-          lastBrightnessChange = millis();
-          display.setContrast(brightness);
-          Serial.print (F("Setting brightness to: "));
-          Serial.println (brightness);
+  
+        if (isPageUpdateTimeout()) {
+          lastPageUpdateTs = millis();
+          switch (currentPage) {
+            case PAGE_TITLE:
+              drawTitleInfo();
+              break;
+              
+            case PAGE_DATETIME:
+              drawDateTimeInfo();
+              break;
+              
+            case PAGE_POSITION:
+              drawPositionInfo();
+              break;
+              
+            case PAGE_GPSINFO:
+              drawGPSInfo();
+              break;
+  
+            case PAGE_BATTERY:
+              drawBatteryInfo();
+              break;
+          }
+  
+          if (!pagingActive) {
+            // drawPagingStoppedIndication();
+          }
+  
+          unsigned int brightness_new  = 255;
+          if ((millis() - lastBrightnessChange > 5000) &&
+              (brightness_new >= 0) && (brightness_new <= 255) &&
+              ((brightness_new >= brightness + 25) || (brightness_new <= brightness - 25))) {
+            brightness = brightness_new;
+            lastBrightnessChange = millis();
+            display.setContrast(brightness);
+            Serial.print (F("Setting brightness to: "));
+            Serial.println (brightness);
+          }
         }
       }
     }
 
     void btnCenter() {
-      if ((millis() - lastPagingToggle) > pageToggleIntervalMin) {
-        lastPagingToggle = millis();
+      if (displayActive && (millis() - lastPagingToggleTs) > pageToggleIntervalMin) {
+        lastPagingToggleTs = millis();
         pagingActive = !pagingActive;
         Serial.print (F("Set paging to "));
         Serial.println (pagingActive);
       }
+      lastUserActivityTs = millis();
     }
 
     void btnBack() {
-
+      lastUserActivityTs = millis();
     }
 
     void btnUp() {
-
+      lastUserActivityTs = millis();
     }
 
     void btnDown() {
-
+      lastUserActivityTs = millis();
     }
 
     void btnRight() {
-      setNextPage (true);
+      if (displayActive) {
+        setNextPage (true);
+      }
+      lastUserActivityTs = millis();
     }
 
     void btnLeft() {
-      setNextPage (false);
+      if (displayActive) {
+        setNextPage (false);
+      }
+      lastUserActivityTs = millis();
     }
 };
 
