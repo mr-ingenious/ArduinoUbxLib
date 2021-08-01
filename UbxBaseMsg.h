@@ -129,7 +129,9 @@ enum UBX_PACKET_TYPE {
 	UBX_NAV_TIMEGPS   = 0x0120, // 16 Periodic/Polled GPS Time Solution
 	UBX_NAV_TIMEUTC   = 0x0121, // 20 Periodic/Polled UTC Time Solution
 	UBX_NAV_VELECEF   = 0x0111, // 20 Periodic/Polled Velocity Solution in ECEF
-	UBX_NAV_VELNED    = 0x0112 // 36 Periodic/Polled Velocity Solution in NED
+	UBX_NAV_VELNED    = 0x0112, // 36 Periodic/Polled Velocity Solution in NED
+	
+	UBX_RXM_SVSI      = 0x0220  // 8 + 6*numSV Periodic/Polled SV Status Info
 };
 
 /* ************************************************************************* */
@@ -406,7 +408,6 @@ class UbxAckNak: public UbxPacket {
 // RXM_PMREQ 0x02 0x41 8 Input Requests a Power Management task
 // RXM_RAW 0x02 0x10 8 + 24*numSV Periodic/Polled Raw Measurement Data
 // RXM_SFRB 0x02 0x11 42 Periodic Subframe Buffer
-// RXM_SVSI 0x02 0x20 8 + 6*numSV Periodic/Polled SV Status Info
 // 
 // TIM_SVIN 0x0D 0x04 28 Periodic/Polled Survey_in data
 // TIM_TM2 0x0D 0x03 28 Periodic/Polled Time mark data

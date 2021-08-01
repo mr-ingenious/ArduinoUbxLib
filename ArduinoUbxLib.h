@@ -5,11 +5,15 @@
 #include "UbxBaseMsg.h"
 #include "UbxCfgMsg.h"
 #include "UbxNavMsg.h"
+#include "UbxMonMsg.h"
+#include "UbxRXMMsg.h"
 
 #include "UbxNMEA.h"
 
 #include "Arduino.h"
 
+#define UBX_LOG(lbr, ...) if (logOutput) { if (lbr) { Serial.println ( __VA_ARGS__); } else { Serial.print ( __VA_ARGS__); }};
+#define UBX_LOGF(lbr, msg) if (logOutput) { if (lbr) { Serial.println (F(msg)); } else { Serial.print (F(msg)); }};
 
 /* ****************************************************************************
   Basic definitions
@@ -50,7 +54,7 @@ struct UbxParserInfo {
     bool isNMEA_PUBX = false;
 };
 
-const unsigned short __inBufLen = 120;
+const unsigned short __inBufLen = 500;
 
 /* ****************************************************************************
   UbxGps:
@@ -67,6 +71,13 @@ class UbxGps {
     void handleUbxPacket ();
     void handleNMEA_GPMsg ();
     void handleNMEA_PUBXMsg ();
+    
+  protected:
+    bool logOutput = false;
+    
+    void setLogOutput (bool newLogOutput) {
+        logOutput = newLogOutput;
+    };
     
   public:
     UbxGps ();

@@ -13,27 +13,27 @@ UbxGps::UbxGps () {
   handleUbxPacket:
   ****************************************************************************/
 void UbxGps::handleUbxPacket () {
-    if (false) {
-      Serial.print ("handleUbxPacket: UBX binary [");
+    if (true) {
+      UBX_LOGF (false, "handleUbxPacket: UBX binary [");
       for (unsigned short i = 0; i < parseInfo.payloadLen + 8; i++) {
         if (inBuf [i] < 0x10) {
-          Serial.print ("0");
+          UBX_LOGF (false, "0");
         }
       
-        Serial.print (inBuf [i], HEX);
-        Serial.print (" ");
+        UBX_LOG (false,inBuf [i], HEX);
+        UBX_LOGF (false, " ");
 
         if (i == 5) {
-          Serial.print (" | ");
+          UBX_LOGF (false, " | ");
         }
       }
       
-      Serial.println ("]");
+      UBX_LOGF (true, "]");
     }
     
     switch (parseInfo.msgClsID) {
         case UBX_ACK_ACK: {
-          // Serial.println ("handleUbxPacket: UBX_ACK_ACK found.");        
+          // UBX_LOGF (true, "handleUbxPacket: UBX_ACK_ACK found.");        
           UbxAckAck p = UbxAckAck (inBuf, parseInfo.payloadLen + 8);
           
           if (p.valid) {
@@ -42,7 +42,7 @@ void UbxGps::handleUbxPacket () {
           break;
           
         case UBX_ACK_NAK: {
-          // Serial.println ("handleUbxPacket: UBX_ACK_NAK found.");
+          // UBX_LOGF (true, "handleUbxPacket: UBX_ACK_NAK found.");
           UbxAckNak p = UbxAckNak (inBuf, parseInfo.payloadLen + 8);
           if (p.valid) {
             onReceive (&p);
@@ -50,7 +50,7 @@ void UbxGps::handleUbxPacket () {
           break;
           
         case UBX_NAV_STATUS: {
-          // Serial.println ("handleUbxPacket: UBX_NAV_STATUS found.");
+          // UBX_LOGF (true, "handleUbxPacket: UBX_NAV_STATUS found.");
           UbxNavStatus p = UbxNavStatus (inBuf, parseInfo.payloadLen + 8);
           if (p.valid) {
             onReceive (&p);
@@ -58,7 +58,7 @@ void UbxGps::handleUbxPacket () {
           break;
         
         case UBX_NAV_SOL: {
-          // Serial.println ("handleUbxPacket: UBX_NAV_SOL found.");
+          // UBX_LOGF (true, "handleUbxPacket: UBX_NAV_SOL found.");
           UbxNavSol p = UbxNavSol (inBuf, parseInfo.payloadLen + 8);
           if (p.valid) {
             onReceive (&p);
@@ -66,7 +66,7 @@ void UbxGps::handleUbxPacket () {
           break;
         
         case UBX_NAV_POSLLH: {
-          // Serial.println ("handleUbxPacket: UBX_NAV_POSLLH found.");
+          // UBX_LOGF (true, "handleUbxPacket: UBX_NAV_POSLLH found.");
           UbxNavPosLLH p = UbxNavPosLLH (inBuf, parseInfo.payloadLen + 8);
           if (p.valid) {
             onReceive (&p);
@@ -74,15 +74,23 @@ void UbxGps::handleUbxPacket () {
           break;
 
         case UBX_NAV_TIMEUTC: {
-          // Serial.println ("handleUbxPacket: UBX_NAV_TIMEUTC found.");
+          // UBX_LOGF (true, "handleUbxPacket: UBX_NAV_TIMEUTC found.");
           UbxNavTimeUTC p = UbxNavTimeUTC (inBuf, parseInfo.payloadLen + 8);
           if (p.valid) {
             onReceive (&p);
           }}
           break;
           
+        case UBX_NAV_TIMEGPS: {
+          // UBX_LOGF (true, "handleUbxPacket: UBX_NAV_TIMEUTC found.");
+          UbxNavTimeGPS p = UbxNavTimeGPS (inBuf, parseInfo.payloadLen + 8);
+          if (p.valid) {
+            onReceive (&p);
+          }}
+          break;
+          
         case UBX_CFG_NMEA: {
-          // Serial.println ("handleUbxPacket: UBX_CFG_NMEA found.");
+          // UBX_LOGF (true, "handleUbxPacket: UBX_CFG_NMEA found.");
           UbxCfgNMEA p = UbxCfgNMEA (inBuf, parseInfo.payloadLen + 8);
           if (p.valid) {
             onReceive (&p);
@@ -90,7 +98,7 @@ void UbxGps::handleUbxPacket () {
           break;
           
         case UBX_CFG_RATE: {
-          // Serial.println ("handleUbxPacket: UBX_CFG_RATE found.");
+          // UBX_LOGF (true, "handleUbxPacket: UBX_CFG_RATE found.");
           UbxCfgRate p = UbxCfgRate (inBuf, parseInfo.payloadLen + 8);
           if (p.valid) {
             onReceive (&p);
@@ -98,7 +106,7 @@ void UbxGps::handleUbxPacket () {
           break;
           
         case UBX_CFG_RXM: {
-          // Serial.println ("handleUbxPacket: UBX_CFG_RXM found.");
+          // UBX_LOGF (true, "handleUbxPacket: UBX_CFG_RXM found.");
           UbxCfgRXM p = UbxCfgRXM (inBuf, parseInfo.payloadLen + 8);
           if (p.valid) {
             onReceive (&p);
@@ -106,8 +114,24 @@ void UbxGps::handleUbxPacket () {
           break;
           
         case UBX_CFG_SBAS: {
-          // Serial.println ("handleUbxPacket: UBX_CFG_SBAS found.");
+          // UBX_LOGF (true, "handleUbxPacket: UBX_CFG_SBAS found.");
           UbxCfgSBAS p = UbxCfgSBAS (inBuf, parseInfo.payloadLen + 8);
+          if (p.valid) {
+            onReceive (&p);
+          }}
+          break;
+          
+        case UBX_MON_VER: {
+          UBX_LOGF (true, "handleUbxPacket: UBX_MON_VER found.");
+          UbxMonVer p = UbxMonVer (inBuf, parseInfo.payloadLen + 8);
+          if (p.valid) {
+            onReceive (&p);
+          }}
+          break;
+
+        case UBX_RXM_SVSI: {
+          UBX_LOGF (true, "handleUbxPacket: UBX_RXM_SVSI found.");
+          UbxRxmSVSI p = UbxRxmSVSI (inBuf, parseInfo.payloadLen + 8);
           if (p.valid) {
             onReceive (&p);
           }}
@@ -122,17 +146,17 @@ void UbxGps::handleNMEA_GPMsg () {
   onReceive ((char*) inBuf, parseInfo.pbCount);
   
   if (false) {
-    Serial.print ("handleNMEA_GPMsg: NMEA GP [");
+    UBX_LOGF (false, "handleNMEA_GPMsg: NMEA GP [");
     for (unsigned short i = 0; i < parseInfo.pbCount; i++) {
       if (inBuf [i] == 0x0D) {
-        Serial.print ("<CR>");
+        UBX_LOGF (false, "<CR>");
       } else if (inBuf [i] == 0x0D) {
-        Serial.println ("<LF>]");
+        UBX_LOGF (true, "<LF>]");
       }else {
-        Serial.print ((char) inBuf [i]);
+        UBX_LOG (false,(char) inBuf [i]);
       }
     }
-    Serial.println();
+    UBX_LOGF (true, "");
   }
 };
 
@@ -143,17 +167,17 @@ void UbxGps::handleNMEA_PUBXMsg () {
   onReceive ((char*) inBuf, parseInfo.pbCount);
   
   if (false) {
-    Serial.print ("handleNMEA_PUBXMsg: NMEA PUBX [");
+    UBX_LOGF (false, "handleNMEA_PUBXMsg: NMEA PUBX [");
     for (unsigned short i = 0; i < parseInfo.pbCount; i++) {
       if (inBuf [i] == 0x0D) {
-        Serial.print ("<CR>");
+        UBX_LOGF (false, "<CR>");
       } else if (inBuf [i] == 0x0D) {
-        Serial.println ("<LF>]");
+        UBX_LOGF (true, "<LF>]");
       } else {
-        Serial.print ((char) inBuf [i]);
+        UBX_LOGF (false, (char) inBuf [i]);
       }
     }
-    Serial.println();
+    UBX_LOGF (true, "");
   }
 };
 
@@ -193,7 +217,7 @@ void UbxGps::parse (byte data) {
             inBuf [1] = data;
             parseInfo.state = PSTATE_UBX_SYNC2;
           } else {
-            Serial.println ("parse: PSTATE_UBX_SYNC1: unexpected character, reset.");
+            UBX_LOGF (true, "parse: PSTATE_UBX_SYNC1: unexpected character, reset.");
             resetParser ();
           }
           break;
@@ -212,7 +236,7 @@ void UbxGps::parse (byte data) {
             parseInfo.msgClsID = data << 8;
             inBuf [2] = data;
           } else {
-            Serial.println ("parse: PSTATE_UBX_SYNC2: unexpected character, reset.");
+            UBX_LOGF (true, "parse: PSTATE_UBX_SYNC2: unexpected character, reset.");
             resetParser ();
           }
           break;
@@ -232,40 +256,40 @@ void UbxGps::parse (byte data) {
         case PSTATE_UBX_LEN1: // second length byte
           inBuf [5] = data;
           parseInfo.payloadLen |= data << 8;
-          // Serial.print ("PSTATE_LEN2: payloadLen: ");
-          // Serial.println (parseInfo.payloadLen);
+          // UBX_LOGF (false, "PSTATE_LEN2: payloadLen: ");
+          // UBX_LOG (true, parseInfo.payloadLen);
           parseInfo.state = PSTATE_UBX_LEN2;
           break;
           
         case PSTATE_UBX_LEN2: // payload ...
-          // Serial.print ("PSTATE_LEN2: payload, pbCount: ");
-          // Serial.println (parseInfo.pbCount);
+          // UBX_LOGF (false, "PSTATE_LEN2: payload, pbCount: ");
+          // UBX_LOG (true, parseInfo.pbCount);
           
           if (6 + parseInfo.pbCount < __inBufLen) {
             inBuf [6 + parseInfo.pbCount] = data;
           
             if (parseInfo.pbCount == parseInfo.payloadLen - 1) {
                 parseInfo.state = PSTATE_UBX_PAYLOAD;
-                // Serial.println ("PSTATE_LEN2: payload done.");
+                // UBX_LOGF (true, "PSTATE_LEN2: payload done.");
             }
             parseInfo.pbCount++;
           } else {
-              Serial.println ("parse: PSTATE_UBX_LEN2: msg length exceeds buffer length, reset.");
+              UBX_LOGF (true, "parse: PSTATE_UBX_LEN2: msg length exceeds buffer length, reset.");
               resetParser ();
           }
           break;
           
         case PSTATE_UBX_PAYLOAD:
-          // Serial.println ("PSTATE_PAYLOAD: CK_A found.");
+          // UBX_LOGF (true, "PSTATE_PAYLOAD: CK_A found.");
           inBuf [6 + parseInfo.payloadLen] = data;
           parseInfo.state = PSTATE_UBX_CHK_A;
           break;
           
         case PSTATE_UBX_CHK_A:
-          // Serial.println ("PSTATE_PAYLOAD: CK_B found.");
+          // UBX_LOGF (true, "PSTATE_PAYLOAD: CK_B found.");
           inBuf [7 + parseInfo.payloadLen] = data;        
           handleUbxPacket ();
-          // Serial.println ("parse: PSTATE_UBX_CHK_A: msg complete, reset");
+          // UBX_LOGF (true, "parse: PSTATE_UBX_CHK_A: msg complete, reset");
           resetParser ();
           break;
           
@@ -276,7 +300,7 @@ void UbxGps::parse (byte data) {
           } else if (data == 'P') {
              parseInfo.state = PSTATE_NMEA_IDP;
           } else {
-              Serial.println ("parse: PSTATE_NMEA_SYNC: unexpected character, reset.");
+              UBX_LOGF (true, "parse: PSTATE_NMEA_SYNC: unexpected character, reset.");
               resetParser ();
           }
           break;
@@ -287,7 +311,7 @@ void UbxGps::parse (byte data) {
             parseInfo.state = PSTATE_NMEA_PAYLOAD;
             parseInfo.isNMEA_GP = true;
           } else {
-            Serial.println ("parse: PSTATE_NMEA_IDGP1: unexpected character, reset.");
+            UBX_LOGF (true, "parse: PSTATE_NMEA_IDGP1: unexpected character, reset.");
             resetParser ();
           }
           break;
@@ -297,7 +321,7 @@ void UbxGps::parse (byte data) {
           if  (data == 'U') {
             parseInfo.state = PSTATE_NMEA_IDU;
           } else {
-            Serial.println ("parse: PSTATE_NMEA_IDP: unexpected character, reset.");
+            UBX_LOGF (true, "parse: PSTATE_NMEA_IDP: unexpected character, reset.");
             resetParser ();
           }
           break;
@@ -307,7 +331,7 @@ void UbxGps::parse (byte data) {
           if  (data == 'B') {
             parseInfo.state = PSTATE_NMEA_IDB;
           } else {
-            Serial.println ("parse: PSTATE_NMEA_IDU: unexpected character, reset.");
+            UBX_LOGF (true, "parse: PSTATE_NMEA_IDU: unexpected character, reset.");
             resetParser ();
           }
           break;
@@ -318,14 +342,14 @@ void UbxGps::parse (byte data) {
             parseInfo.state = PSTATE_NMEA_PAYLOAD;
             parseInfo.isNMEA_PUBX = true;
           } else {
-            Serial.println ("parse: PSTATE_NMEA_IDB: unexpected character, reset.");
+            UBX_LOGF (true, "parse: PSTATE_NMEA_IDB: unexpected character, reset.");
             resetParser ();
           }
           break;
           
         case PSTATE_NMEA_PAYLOAD:
           if (parseInfo.pbCount == __inBufLen - 1) {
-              Serial.println ("parse: PSTATE_NMEA_PAYLOAD: msg length exceeds buffer length, reset.");
+              UBX_LOGF (true, "parse: PSTATE_NMEA_PAYLOAD: msg length exceeds buffer length, reset.");
               resetParser ();
           } else {
             inBuf[parseInfo.pbCount++] = data;
@@ -346,16 +370,16 @@ void UbxGps::parse (byte data) {
                   handleNMEA_GPMsg();
               }
               
-              // Serial.println ("parse: PSTATE_NMEA_CR: msg complete, reset");
+              // UBX_LOGF (true, "parse: PSTATE_NMEA_CR: msg complete, reset");
               resetParser ();
           }
           break;
     }
     
     if (false) {
-      Serial.print ("   PSTATE: ");
-      Serial.print (lastState);
-      Serial.print (" --> ");
-      Serial.println (parseInfo.state);
+      UBX_LOGF (false, "   PSTATE: ");
+      UBX_LOG (false, lastState);
+      UBX_LOGF (false, " --> ");
+      UBX_LOG (true, parseInfo.state);
     }
 };

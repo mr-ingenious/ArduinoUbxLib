@@ -10,8 +10,8 @@ struct UbxNavStatusPayload {
 	byte flags = 0;
 	byte fixStat = 0;
 	byte flags2 = 0;
-	unsigned int ttff;
-	unsigned int msss;
+	unsigned int ttff = 0;
+	unsigned int msss = 0;
 };
 
 class UbxNavStatus: public UbxPacket {
@@ -232,6 +232,60 @@ class UbxNavSol: public UbxPacket {
 				valid = isChecksumValid (buffer, 2, h.length + 4, checksum);
 			}
 		};
+};
+
+/* ************************************************************************* */
+struct UbxNavTimeGPSPayload {
+	unsigned int iTOW = 0;
+    int fTOW = 0;
+    short week = 0;
+    byte leapS = 0;
+	byte valid = 0;
+	unsigned short tAcc = 0;
+};
+
+class UbxNavTimeGPS: public UbxPacket {
+	public:
+		UbxNavTimeGPSPayload pl;
+		
+		UbxNavTimeGPS () {
+			h.msgClsID = UBX_NAV_TIMEGPS;
+			h.length = 16;
+		}
+		
+		UbxNavTimeGPS (byte* buffer, unsigned short len) {
+			h.msgClsID = UBX_NAV_TIMEGPS;
+			h.length = 16;
+
+			if (len == 24) {
+				pl.iTOW  = buffer[9] << 24;
+				pl.iTOW |= buffer[8] << 16;
+				pl.iTOW |= buffer[7] << 8;
+				pl.iTOW |= buffer[6];
+
+				pl.fTOW  = buffer[13] << 24;
+				pl.fTOW |= buffer[12] << 16;
+				pl.fTOW |= buffer[11] << 8;
+				pl.fTOW |= buffer[10];
+				
+				pl.week  = buffer[15] << 8;
+				pl.week |= buffer[14];
+				
+				pl.leapS = buffer[16];
+				
+				pl.valid = buffer[17];
+				
+				pl.tAcc  = buffer[21] << 24;
+				pl.tAcc |= buffer[20] << 16;
+				pl.tAcc |= buffer[19] << 8;
+				pl.tAcc |= buffer[18];
+				
+				checksum  = buffer[22] << 8;
+				checksum |= buffer[23];
+				
+				valid = isChecksumValid (buffer, 2, h.length + 4, checksum);
+			}
+		}	
 };
 
 /* ************************************************************************* */
