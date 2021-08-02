@@ -532,10 +532,10 @@ class PagingControl {
 
       switch  (currentPage) {
         case PAGE_TITLE:
-          (forwardPaging) ? currentPage = PAGE_DATETIME : currentPage = PAGE_GPSINFO;
+          (forwardPaging) ? currentPage = PAGE_DATETIME : currentPage = PAGE_BATTERY;
           break;
         case PAGE_DATETIME:
-          (forwardPaging) ? currentPage = PAGE_POSITION : currentPage = PAGE_GPSINFO;
+          (forwardPaging) ? currentPage = PAGE_POSITION : currentPage = PAGE_BATTERY;
           break;
         case PAGE_POSITION:
           (forwardPaging) ? currentPage = PAGE_GPSINFO : currentPage = PAGE_DATETIME;
