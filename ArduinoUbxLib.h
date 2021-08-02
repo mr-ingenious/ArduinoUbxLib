@@ -1,7 +1,6 @@
 #ifndef __AUBXLIB_H_
 #define __AUBXLIB_H_
 
-// #include "UbxPacketDefs.h"
 #include "UbxBaseMsg.h"
 #include "UbxCfgMsg.h"
 #include "UbxNavMsg.h"
@@ -57,9 +56,7 @@ struct UbxParserInfo {
 const unsigned short __inBufLen = 500;
 
 /* ****************************************************************************
-  UbxGps:
-  
-  ...
+  UbxGps: the main class of the UBX message parser.
   ****************************************************************************/
 class UbxGps {
   private:
