@@ -1,38 +1,25 @@
 #include <Arduino.h>
 
-// -- GPS Module ------------------------------------------------
 #include <ArduinoUbxLib.h>
+
+/* ****************************************************************************
+  This example shows the usage of the Arduino UBX library. The code allows
+  control via the serial console:
+  - enter '1#' to stop all GPS NMEA output
+  - enter '2#' to enable selected GPS NMEA output
+  - enter '3#' to stop all UBX binary output
+  - enter '4#' to enable selected UBX binary output
+  - enter '5#' to '9#' to poll one out of these information:
+          5: CFG-NMEA
+          6: CFG-RATE
+          7: RXM-SVSI
+          8: CFG-SBAS
+          9: MON-VER
+  ****************************************************************************/
+
+
 static const uint32_t GPSBaud = 9600;
-const unsigned short gpsBufferLen = 100;
-
-// -- Battery ---------------------------------------------------
-#define VBATPIN A7
-
-// -- OLED Display ----------------------------------------------
-#include <U8g2lib.h>
-#ifdef U8X8_HAVE_HW_SPI
-#include <SPI.h>
-#endif
-
-const int PIN_DISPLAY_CS  = 11;
-const int PIN_DISPLAY_DC  = 17;
-const int PIN_DISPLAY_RES = 6;
-U8G2_SH1106_128X64_NONAME_F_4W_HW_SPI display (U8G2_R0, PIN_DISPLAY_CS, PIN_DISPLAY_DC, PIN_DISPLAY_RES);
-
-const unsigned int DEFAULT_PAGE_CYCLE_TIME = 5000; // ms
-const unsigned int DEFAULT_PAGE_UPDATE_INTERVAL = 250; // ms
-const bool START_PAGE_CYCLING = true;
-const unsigned short DEFAULT_DISPLAY_INACTIVITY_TIMEOUT = 60; // seconds
-
-
-// -- 6 Button Module  -------------------------------------------
-#include <SixBtnModuleLib.h>
-const int PIN_BUTTONS = 19;
-SBMReader inputReader (PIN_BUTTONS, INPUT);
-
-// -- Activity LED -----------------------------------------------
-const int PIN_ACT_LED = 5;
-int actLedState = LOW;
+const unsigned short gpsBufferLen = 200;
 
 class MyGps: public UbxGps {
   private:
@@ -82,16 +69,6 @@ class MyGps: public UbxGps {
           send (&p);
           // canSend = false;
         };
-
-      void alterLed() {
-        if (actLedState == LOW) {
-        actLedState = HIGH;
-        } else {
-        actLedState = LOW;
-        }
-        
-        digitalWrite (PIN_ACT_LED, actLedState);
-      };
        
   public:
     UbxNavStatusPayload navStatusInfo;
@@ -104,9 +81,7 @@ class MyGps: public UbxGps {
       lastUbxReceivedTs = millis();
     }
     
-    void send (UbxPacket* p) {
-      digitalWrite (PIN_ACT_LED, HIGH);
-      
+    void send (UbxPacket* p) {  
       unsigned short pLen = p->toArray (buffer, gpsBufferLen);
          
       Serial.print("send: [");
@@ -131,7 +106,6 @@ class MyGps: public UbxGps {
 
       // clear the buffer
       memset (buffer, 0, gpsBufferLen);
-      digitalWrite (PIN_ACT_LED, LOW);
     };
 
     void startSequence() {
@@ -151,7 +125,6 @@ class MyGps: public UbxGps {
             sendCfgMsg (UBX_NMEA_RMC, false); canSend = true;
             sendCfgMsg (UBX_NMEA_VTG, false); canSend = true;
             sendCfgMsg (UBX_NMEA_GGA, false); canSend = false;
-            cfgCount = 3; canSend = true;
             break;
           
           case 2:
@@ -169,9 +142,8 @@ class MyGps: public UbxGps {
             sendCfgMsg (UBX_NAV_POSLLH,  false); canSend = true;
             sendCfgMsg (UBX_NAV_SOL,     false); canSend = true;
             sendCfgMsg (UBX_NAV_STATUS,  false); canSend = true;
-            sendCfgMsg (UBX_NAV_TIMEUTC, false); canSend = false;
-            // sendCfgMsg (UBX_NAV_TIMEGPS, false); canSend = false;
-            cfgCount = 4; canSend = true;
+            sendCfgMsg (UBX_NAV_TIMEUTC, false); canSend = true;
+            sendCfgMsg (UBX_NAV_TIMEGPS, false); canSend = false;
             break;
 
           case 4:
@@ -180,8 +152,7 @@ class MyGps: public UbxGps {
             sendCfgMsg (UBX_NAV_SOL,     true); canSend = true;
             sendCfgMsg (UBX_NAV_STATUS,  true); canSend = true;
             sendCfgMsg (UBX_NAV_TIMEUTC, true); canSend = true;
-            // sendCfgMsg (UBX_NAV_TIMEGPS, true);
-            canSend = false;
+            sendCfgMsg (UBX_NAV_TIMEGPS, true); canSend = false;
             break;
           
           case 5:
@@ -208,16 +179,6 @@ class MyGps: public UbxGps {
             Serial.println (F("Polling MON_VER ..."));
             sendPoll (UBX_MON_VER); canSend = false;
             break;
-
-          // funktioniert nicht:
-          // case 10: sendCfgMsg (UBX_CFG_NMEA, false); canSend = false; break;
-          // case 11: sendCfgMsg (UBX_CFG_RATE, false); canSend = false; break;
-          // case 12: sendCfgMsg (UBX_CFG_RXM, false); canSend = false; break;
-          // case 13: sendCfgMsg (UBX_CFG_SBAS, false); canSend = false; break;
-          // case 10: sendCfgMsg (UBX_CFG_NMEA, true); canSend = false; break;
-          // case 11: sendCfgMsg (UBX_CFG_RATE, true); canSend = false; break;
-          // case 12: sendCfgMsg (UBX_CFG_RXM, true); canSend = false; break;
-          // case 13: sendCfgMsg (UBX_CFG_SBAS, true); canSend = false; break;
         }
       }
 
@@ -478,390 +439,8 @@ class MyGps: public UbxGps {
 MyGps gps;
 
 // ------------------------------------------------------------------
-/**
-   Controls the display paging, i.e. the sequence which pages are currently displayed.
-*/
-
-
-enum page {PAGE_TITLE, PAGE_DATETIME, PAGE_POSITION, PAGE_GPSINFO, PAGE_BATTERY, PAGE_SETTINGS};
-
-page DEFAULT_FIRST_PAGE = PAGE_TITLE;
-
-class PagingControl {
-  private:
-    bool pagingActive = START_PAGE_CYCLING;
-    bool displayActive = true;
-    
-    unsigned long lastPageCycleTs = 0;
-    unsigned long lastPageUpdateTs = 0;
-    unsigned long lastPagingToggleTs = 0;
-    unsigned long lastUserActivityTs = 0;
-    unsigned long lastBrightnessChange = 0;
-    
-    unsigned long pageCycleInterval = DEFAULT_PAGE_CYCLE_TIME;
-    unsigned long pageUpdateInterval = DEFAULT_PAGE_UPDATE_INTERVAL;
-    unsigned long pageToggleIntervalMin = 500;
-    unsigned int brightness = 255;
-    unsigned short displayInactivityTimeout = DEFAULT_DISPLAY_INACTIVITY_TIMEOUT * 1000;
-    
-    page currentPage = DEFAULT_FIRST_PAGE;
-
-    bool isPageCycleTimeout() {
-      if ((millis() - lastPageCycleTs) > pageCycleInterval)
-        return true;
-      else
-        return false;
-    }
-
-    bool isPageUpdateTimeout() {
-      if ((millis() - lastPageUpdateTs) > pageUpdateInterval)
-        return true;
-      else
-        return false;
-    }
-
-    bool isUserInactiveTimeout() {
-      if ((millis() - lastUserActivityTs) > displayInactivityTimeout)
-        return true;
-      else
-        return false;
-    }
-
-    void setNextPage(bool forwardPaging) {
-      lastPageCycleTs = millis();
-
-      switch  (currentPage) {
-        case PAGE_TITLE:
-          (forwardPaging) ? currentPage = PAGE_DATETIME : currentPage = PAGE_BATTERY;
-          break;
-        case PAGE_DATETIME:
-          (forwardPaging) ? currentPage = PAGE_POSITION : currentPage = PAGE_BATTERY;
-          break;
-        case PAGE_POSITION:
-          (forwardPaging) ? currentPage = PAGE_GPSINFO : currentPage = PAGE_DATETIME;
-          break;
-        case PAGE_GPSINFO:
-          (forwardPaging) ? currentPage = PAGE_BATTERY : currentPage = PAGE_POSITION;
-          break;
-        case PAGE_BATTERY:
-          (forwardPaging) ? currentPage = PAGE_DATETIME : currentPage = PAGE_GPSINFO;
-          break;
-      }
-    }
-
-    void drawTitleInfo () {
-      display.clearBuffer();
-      
-      display.setFont (u8g2_font_8x13_mf);
-      unsigned int strLength = display.getUTF8Width ("Weather Logger");
-      display.drawStr ((display.getDisplayWidth() - strLength) / 2, 35, "Weather Logger");
-      
-      display.sendBuffer();
-    }
-
-    void drawPositionInfo() {      
-      display.clearBuffer();    
-      display.setFont (u8g2_font_6x10_mf);
-      display.drawStr (0, 10, "[POSITION]");
-      display.drawStr (0, 30, "Lon: ");
-      display.setCursor (50, 30);
-
-      double coord = 0.0;
-
-      display.drawStr (0, 30, "Lat: ");
-      display.setCursor (50, 30);
-
-      if (gps.navPosLLHInfo.lon == 0 && gps.navPosLLHInfo.lat == 0) {
-        display.print ("-");
-      } else {
-        coord = (double) gps.navPosLLHInfo.lat / 10000000.0;
-
-        display.print (coord, 7);
-        if (coord >= 0.0) {
-          display.print (" |N");
-        } else {
-          display.print (" |S");
-        }
-      }
-
-      display.drawStr (0, 42, "Lon: ");
-      display.setCursor (50, 42);
-      if (gps.navPosLLHInfo.lon == 0 && gps.navPosLLHInfo.lat == 0) {
-        display.print ("-");
-      } else {
-        coord = (double) gps.navPosLLHInfo.lon / 10000000.0;
-
-        display.print (coord, 7);
-        if (coord >= 0.0) {
-          display.print (" |E");
-        } else {
-          display.print (" |W");
-        }
-      }
-
-      float height = gps.navPosLLHInfo.height / 1000;
-      display.drawStr (0, 54, "Height: ");
-      display.setCursor (50, 54);
-      display.print (height, 2);
-      display.print (" m");
-
-      display.sendBuffer();
-    }
- 
-    void drawGPSInfo() {
-      display.clearBuffer();
-
-      display.setFont (u8g2_font_6x10_mf);
-      display.drawStr (0, 10, "[GPS INFO]");
-
-      display.drawStr (0, 20, "fix: ");
-      display.setCursor (50, 20);
-      display.print ("0x");
-      display.print (gps.navStatusInfo.gpsFix, HEX);
-      display.print (" / 0x");
-      display.print (gps.navStatusInfo.flags, HEX);
-
-      
-      display.drawStr (0, 30, "pAcc: ");
-      display.setCursor (50, 30);
-      display.print ((float)gps.navSolInfo.pAcc / 100.0, 2);
-      display.print (" m");
-      
-      display.drawStr (0, 40, "pDOP: ");
-      display.setCursor (50, 40);
-      display.print (gps.navSolInfo.pDOP);
-
-      display.drawStr (0, 50, "numSV: ");
-      display.setCursor (50, 50);
-      display.print (gps.navSolInfo.numSV);
-      
-      display.sendBuffer();
-    }
-
-    void drawDateTimeInfo() {
-      display.clearBuffer();
-      
-      display.setFont (u8g2_font_6x10_mf);
-      display.setCursor (0, 10);
-      display.print ("[DATE/TIME] ");
-      if (gps.navTimeUTCInfo.valid) {
-        display.print ("[OK]");
-      } else {
-        display.print ("[NOK]");
-      }
-
-      display.drawStr (0, 30, "Date: ");
-      display.setCursor (40, 30);
-      display.print (gps.navTimeUTCInfo.year);
-      display.print ("-");
-      if (gps.navTimeUTCInfo.month < 10) { display.print ("0"); };
-      display.print (gps.navTimeUTCInfo.month);
-      display.print ("-");
-      if (gps.navTimeUTCInfo.day < 10) { display.print ("0"); };
-      display.print (gps.navTimeUTCInfo.day);
-      
-      display.drawStr (0, 42, "Time: ");
-      display.setCursor (40, 42);
-      if (gps.navTimeUTCInfo.hour < 10) { display.print ("0"); };
-      display.print (gps.navTimeUTCInfo.hour);
-      display.print (":");
-      if (gps.navTimeUTCInfo.min < 10) { display.print ("0"); };
-      display.print (gps.navTimeUTCInfo.min);
-      display.print (":");
-      if (gps.navTimeUTCInfo.sec < 10) { display.print ("0"); };
-      display.print (gps.navTimeUTCInfo.sec);
-
-      display.drawStr (0, 54, "tAcc: ");
-      display.setCursor (40, 54);
-      display.print (gps.navTimeUTCInfo.tAcc);
-      display.print (" ns");
-      
-      display.sendBuffer();
-    }
-
-    void drawBatteryInfo() {
-      display.clearBuffer();
-
-      // Code from https://learn.adafruit.com/adafruit-feather-m0-adalogger/power-management
-      
-      float batteryVoltage = analogRead(VBATPIN);
-      batteryVoltage *= 2;    // we divided by 2, so multiply back
-      batteryVoltage *= 3.3;  // Multiply by 3.3V, our reference voltage
-      batteryVoltage /= 1024; // convert to voltage
-      
-      display.setFont (u8g2_font_6x10_mf);
-      display.setCursor (0, 10);
-      display.print ("[BATTERY]");
-      display.drawStr (0, 30, "Voltage: ");
-      display.setCursor (60, 30);
-      display.print (batteryVoltage, 2);
-      display.print (" V");
-      
-      display.sendBuffer();
-    }
-    
-    void drawSettings() {
-      display.clearBuffer();
-      
-      display.setFont (u8g2_font_6x10_mf);
-      display.setCursor (0, 10);
-      display.print ("[SETTINGS]");
-      
-      display.sendBuffer();
-    }
-    
-    void drawPagingStoppedIndication() {
-      // display.drawFrame(0, 0, 128, 64);
-      display.setFont(u8g2_font_unifont_t_symbols);
-      display.drawGlyph(100, 20, 9208);
-      display.sendBuffer();
-    }
-
-  public:
-    PagingControl() {
-      lastPageCycleTs = millis() + pageCycleInterval;
-      lastPageUpdateTs = millis() + pageUpdateInterval;
-      lastPagingToggleTs = millis() + pageToggleIntervalMin;
-      lastUserActivityTs = millis();
-    }
-
-    void updateDisplay() {
-      if (isUserInactiveTimeout()) {
-        if (displayActive) {
-          Serial.println (F("updateDisplay: user inactive, switching off display ..."));
-          display.setPowerSave (1);
-          displayActive = false;
-        }
-      } else {
-        if (!displayActive) {
-          Serial.println (F("updateDisplay: user inactive, switching on display ..."));
-          display.setPowerSave (0);
-        }
-        
-        displayActive = true;
-      }
-
-      if (displayActive) {
-        if (isPageCycleTimeout() && pagingActive) {
-          setNextPage(true);
-        }
-  
-        if (isPageUpdateTimeout()) {
-          lastPageUpdateTs = millis();
-          switch (currentPage) {
-            case PAGE_TITLE:
-              drawTitleInfo();
-              break;
-              
-            case PAGE_DATETIME:
-              drawDateTimeInfo();
-              break;
-              
-            case PAGE_POSITION:
-              drawPositionInfo();
-              break;
-              
-            case PAGE_GPSINFO:
-              drawGPSInfo();
-              break;
-  
-            case PAGE_BATTERY:
-              drawBatteryInfo();
-              break;
-          }
-  
-          if (!pagingActive) {
-            // drawPagingStoppedIndication();
-          }
-  
-          unsigned int brightness_new  = 255;
-          if ((millis() - lastBrightnessChange > 5000) &&
-              (brightness_new >= 0) && (brightness_new <= 255) &&
-              ((brightness_new >= brightness + 25) || (brightness_new <= brightness - 25))) {
-            brightness = brightness_new;
-            lastBrightnessChange = millis();
-            display.setContrast(brightness);
-            Serial.print (F("Setting brightness to: "));
-            Serial.println (brightness);
-          }
-        }
-      }
-    }
-
-    void btnCenter() {
-      if (displayActive && (millis() - lastPagingToggleTs) > pageToggleIntervalMin) {
-        lastPagingToggleTs = millis();
-        pagingActive = !pagingActive;
-        Serial.print (F("Set paging to "));
-        Serial.println (pagingActive);
-      }
-      lastUserActivityTs = millis();
-    }
-
-    void btnBack() {
-      lastUserActivityTs = millis();
-    }
-
-    void btnUp() {
-      lastUserActivityTs = millis();
-    }
-
-    void btnDown() {
-      lastUserActivityTs = millis();
-    }
-
-    void btnRight() {
-      if (displayActive) {
-        setNextPage (true);
-      }
-      lastUserActivityTs = millis();
-    }
-
-    void btnLeft() {
-      if (displayActive) {
-        setNextPage (false);
-      }
-      lastUserActivityTs = millis();
-    }
-};
-
-PagingControl pageControl;
-
-// --------------------------------------------------------------------------------
-void setupDisplay() {
-  display.begin();
-  display.enableUTF8Print();
-  unsigned int displayWidth = display.getDisplayWidth();
-  unsigned int displayHeight = display.getDisplayHeight();
-  Serial.print (F("Display dimensions: "));
-  Serial.print (displayWidth);
-  Serial.print ("x" );
-  Serial.println (displayHeight);
-}
-
-void setup() {
-  Serial.begin (115200);
-  
-  // wait for serial to be opened before starting the program
-  // while (!Serial) {delay (100);};
-  
-  Serial.println (F("Starting ..."));
-  Serial1.begin (GPSBaud);
-  gps.startSequence();
-
-  setupDisplay ();
-  
-  pinMode (PIN_ACT_LED, OUTPUT);
-  digitalWrite (PIN_ACT_LED, actLedState);
-}
-
-unsigned long lastReceivedTs = 0;
-bool sepWritten = true;
-
 void communicateWithGps() {
-  while (Serial1.available()) {
-    digitalWrite (PIN_ACT_LED, HIGH);
-    
+  while (Serial1.available()) {  
     char in = Serial1.read();
     if (false) {
       if (in == 0xB5) {
@@ -885,85 +464,12 @@ void communicateWithGps() {
     }
 
     gps.parse (in);
-    
-    lastReceivedTs = millis();
   }
-  digitalWrite (PIN_ACT_LED, LOW);
 
   gps.checkState();
 };
 
-// --------------------------------------------------------------------------------
-void handleButtonEvent2 (byte btn) {
-  switch (btn) {
-    case BUTTON_LEFT:
-      Serial.println (F("Buttons: [LEFT] triggered"));
-      break;
-      
-    case BUTTON_RIGHT:
-      Serial.println (F("Buttons: [RIGHT] triggered"));
-      break;
-      
-    case BUTTON_UP:
-      Serial.print (F("Buttons: [UP] triggered --> increase cfgCount: "));
-      gps.setCanSend(false); 
-      Serial.println (gps.incCC());
-      break;
-      
-    case BUTTON_DOWN:
-      Serial.print (F("Buttons: [DOWN] triggered --> decrease cfgCount: "));
-      gps.setCanSend(false);
-      Serial.println (gps.decCC());
-      break;
-      
-    case BUTTON_CENTER:
-      Serial.println (F("Buttons: [CENTER] triggered --> canSend = true"));
-      gps.setCanSend (true);
-      break;
-      
-    case BUTTON_BACK:
-      Serial.println (F("Buttons: [BACK] triggered --> reset cfgCount"));
-      gps.setCanSend(false);
-      gps.resetCC();
-      break;
-      
-    case BUTTON_NONE:
-      // Serial.println (F("Buttons: nothing ..."));
-      break;
-  }
-}
-
-// --------------------------------------------------------------------------------
-void handleButtonEvent (byte btn) {
-  switch (btn) {
-    case BUTTON_LEFT:
-      Serial.println (F("Buttons: [LEFT] triggered --> paging left"));
-      pageControl.btnLeft();
-      break;
-    case BUTTON_RIGHT:
-      Serial.println (F("Buttons: [RIGHT] triggered --> paging right"));
-      pageControl.btnRight();
-      break;
-    case BUTTON_UP:
-      Serial.println (F("Buttons: [UP] triggered --> paging up"));
-      pageControl.btnUp();
-      break;
-    case BUTTON_DOWN:
-      Serial.println(F("Buttons: [DOWN] triggered --> paging down"));
-      pageControl.btnDown();
-      break;
-    case BUTTON_CENTER:
-      Serial.println (F("Buttons: [CENTER] triggered --> option OK"));
-      pageControl.btnCenter();
-      break;
-    case BUTTON_BACK:
-      Serial.println (F("Buttons: [BACK] triggered --> option EXIT"));
-      pageControl.btnBack();
-      break;
-  }
-}
-
-
+// ------------------------------------------------------------------
 void handleSerialInEvent () {
  while (Serial.available()) {
     char in = Serial.read();
@@ -1014,9 +520,21 @@ void handleSerialInEvent () {
   }
 }
 
+// ------------------------------------------------------------------
+void setup() {
+  Serial.begin (115200);
+  
+  // wait for serial to be opened before starting the program
+  while (!Serial) {delay (100);};
+  
+  Serial.println (F("Starting ..."));
+  Serial1.begin (GPSBaud);
+
+  // gps.startSequence();
+}
+
+// ------------------------------------------------------------------
 void loop() {
   communicateWithGps ();
-  handleButtonEvent (inputReader.readButtons());
   handleSerialInEvent ();
-  pageControl.updateDisplay();
 };
