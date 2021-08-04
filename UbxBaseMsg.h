@@ -135,12 +135,6 @@ enum UBX_PACKET_TYPE {
 };
 
 /* ************************************************************************* */
-struct pInfo {
-	byte* ptr = 0;
-	unsigned short len = 0;
-};
-
-/* ************************************************************************* */
 struct UbxPacketHeader {
 	unsigned short msgClsID = 0;
 	unsigned short length = 0;
@@ -187,6 +181,66 @@ class UbxPacket {
 		};
 		
 		virtual void payloadToArray (byte* buffer, unsigned short bLen) { };
+		
+		static void bufferToStruct (byte* buffer, unsigned short offset, float* target) {
+			unsigned int tmp = 0.0;
+			
+			tmp  = buffer[offset + 3] << 24;
+			tmp |= buffer[offset + 2] << 16;
+			tmp |= buffer[offset + 1] << 8;
+			tmp |= buffer[offset];
+			
+			*target = (float) tmp;
+		};
+		
+		static void bufferToStruct (byte* buffer, unsigned short offset, unsigned int* target) {
+			*target  = buffer[offset + 3] << 24;
+			*target |= buffer[offset + 2] << 16;
+			*target |= buffer[offset + 1] << 8;
+			*target |= buffer[offset];
+		};
+		
+		static void bufferToStruct (byte* buffer, unsigned short offset, int* target) {
+			*target  = buffer[offset + 3] << 24;
+			*target |= buffer[offset + 2] << 16;
+			*target |= buffer[offset + 1] << 8;
+			*target |= buffer[offset];
+		};
+		
+		static void bufferToStruct (byte* buffer, unsigned short offset, unsigned short* target) {
+			*target  = buffer[offset + 1] << 8;
+			*target |= buffer[offset];
+		};
+		
+		static void bufferToStruct (byte* buffer, unsigned short offset, short* target) {
+			*target  = buffer[offset + 1] << 8;
+			*target |= buffer[offset];
+		};
+		
+		static void bufferToStruct (byte* buffer, unsigned short offset, byte* target) {
+			*target = buffer[offset];
+		};
+		
+		static void bufferToChecksum (byte* buffer, unsigned short offset, unsigned short* target) {
+			*target  = buffer[offset] << 8;
+			*target |= buffer[offset + 1];
+		};
+		
+		static void structToBuffer (byte* buffer, unsigned short offset, unsigned int* source) {
+			buffer[offset]     = (*source >> 24) & 0xFF;
+			buffer[offset + 1] = (*source >> 16) & 0xFF;
+			buffer[offset + 2] = (*source >> 8) & 0xFF;
+      		buffer[offset + 3] = *source & 0xFF;
+		};
+		
+		static void structToBuffer (byte* buffer, unsigned short offset, unsigned short* source) {
+			buffer[offset]     = (*source >> 8) & 0xFF;
+      		buffer[offset + 1] = *source & 0xFF;
+		};
+		
+		static void structToBuffer (byte* buffer, unsigned short offset, byte* source) {
+			buffer[offset] = *source;
+		};
 		
 	public:
         UbxPacket () {};
@@ -236,11 +290,10 @@ class UbxAckAck: public UbxPacket {
             h.length = 2;
 			
             if (len == 10) {
-				pl.pClsID = buffer[6];
-				pl.pMsgID = buffer[7];
+				structToBuffer (buffer, 6, &pl.pClsID);
+				structToBuffer (buffer, 7, &pl.pMsgID);
                 
-				checksum  = buffer [8] << 8;
-				checksum |= buffer [9];
+				bufferToChecksum (buffer, 8, &checksum);
 				
 				valid = isChecksumValid (buffer, 2, h.length + 4, checksum);
             } 
@@ -261,11 +314,10 @@ class UbxAckNak: public UbxPacket {
             h.length = 2;
 			
             if (len == 10) {
-				pl.pClsID = buffer[6];
-				pl.pMsgID = buffer[7];
+				structToBuffer (buffer, 6, &pl.pClsID);
+				structToBuffer (buffer, 7, &pl.pMsgID);
                 
-				checksum  = buffer [8] << 8;
-				checksum |= buffer [9];
+				bufferToChecksum (buffer, 8, &checksum);
 				
 				valid = isChecksumValid (buffer, 2, h.length + 4, checksum);
             } 

@@ -10,25 +10,24 @@
 /* ************************************************************************* */
 struct UbxCfgMsgMTPayload {
   unsigned short cfgMsgClsID = 0;
-  byte rate[6] = {0};
+  byte rate[6] = { 0 };
 };
 
 class UbxCfgMsgMT: public UbxPacket {
   private:
     void payloadToArray (byte* buffer, unsigned short bLen) {
-      buffer[0] = (pl.cfgMsgClsID >> 8) & 0xFF;
-      buffer[1] = pl.cfgMsgClsID & 0xFF;
-
-      buffer[2] = pl.rate[0];
-      buffer[3] = pl.rate[1];
-      buffer[4] = pl.rate[2];
-      buffer[5] = pl.rate[3];
-      buffer[6] = pl.rate[4];
-      buffer[7] = pl.rate[5];
+        
+      structToBuffer (buffer, 0, &pl.cfgMsgClsID);
+      structToBuffer (buffer, 2, &pl.rate[0]);
+      structToBuffer (buffer, 3, &pl.rate[1]);
+      structToBuffer (buffer, 4, &pl.rate[2]);
+      structToBuffer (buffer, 5, &pl.rate[3]);
+      structToBuffer (buffer, 6, &pl.rate[4]);
+      structToBuffer (buffer, 7, &pl.rate[5]);
     };
     
   public:
-        UbxCfgMsgMTPayload pl;
+    UbxCfgMsgMTPayload pl;
             
     UbxCfgMsgMT () {
       h.msgClsID = UBX_CFG_MSG;
@@ -45,10 +44,8 @@ struct UbxCfgMsgPayload {
 class UbxCfgMsg: public UbxPacket {
   private:
     void payloadToArray (byte* buffer, unsigned short bLen) {
-      buffer[0] = (pl.cfgMsgClsID >> 8) & 0xFF;
-      buffer[1] = pl.cfgMsgClsID & 0xFF;
-      
-      buffer[2] = pl.rate;
+      structToBuffer (buffer, 0, &pl.cfgMsgClsID);
+      structToBuffer (buffer, 2, &pl.rate);
     };
     
   public:
@@ -58,23 +55,26 @@ class UbxCfgMsg: public UbxPacket {
       h.msgClsID = UBX_CFG_MSG;
       h.length = 3;
     };
-    
-    unsigned short toPollingArray (byte* buffer, unsigned short bLen) {
-      h.length = 2;
-      
-      if (bLen >= 10 && buffer != NULL) {
-        headerToArray (buffer, bLen);
+};
 
-        buffer[0] = (pl.cfgMsgClsID >> 8) & 0xFF;
-        buffer[1] = pl.cfgMsgClsID & 0xFF;
+/* ************************************************************************* */
+struct UbxCfgMsgPollReqPayload {
+  unsigned short cfgMsgClsID = 0;
+};
+
+class UbxCfgMsgPollReq: public UbxPacket {
+  private:
+    void payloadToArray (byte* buffer, unsigned short bLen) {
+      structToBuffer (buffer, 0, &pl.cfgMsgClsID);
+    };
+    
+  public:
+    UbxCfgMsgPollReqPayload pl;
         
-        checksumToArray (buffer, bLen);
-        
-        return 10;
-      } else {
-              return 0;
-      }
-        };
+    UbxCfgMsgPollReq () {
+      h.msgClsID = UBX_CFG_MSG;
+      h.length = 2;
+    };
 };
 
 /* ************************************************************************* */
@@ -142,10 +142,10 @@ struct UbxCfgNMEAPayload {
 class UbxCfgNMEA: public UbxPacket {
   private:
     void payloadToArray (byte* buffer, unsigned short bLen) {
-      buffer[0] = pl.filter;
-      buffer[1] = pl.version;
-      buffer[2] = pl.numSV;
-      buffer[3] = pl.flags;
+      structToBuffer (buffer, 0, &pl.filter);
+      structToBuffer (buffer, 1, &pl.version);
+      structToBuffer (buffer, 2, &pl.numSV);
+      structToBuffer (buffer, 3, &pl.flags);
     };
     
   public:
@@ -161,13 +161,12 @@ class UbxCfgNMEA: public UbxPacket {
       h.length = 4;
       
       if (len == 12) {
-        pl.filter  = buffer[6];
-        pl.version = buffer[7];
-        pl.numSV   = buffer[8];
-        pl.flags   = buffer[9];
+        bufferToStruct (buffer, 6, &pl.filter);
+        bufferToStruct (buffer, 7, &pl.version);
+        bufferToStruct (buffer, 8, &pl.numSV);
+        bufferToStruct (buffer, 9, &pl.flags);
         
-        checksum  = buffer[10] << 8;
-        checksum |= buffer[11];
+        bufferToChecksum (buffer, 10, &checksum);
         
         valid = isChecksumValid (buffer, 2, h.length + 4, checksum);
       }
@@ -184,14 +183,9 @@ struct UbxCfgRatePayload {
 class UbxCfgRate: public UbxPacket {
   private:
     void payloadToArray (byte* buffer, unsigned short bLen) {
-      buffer[0] = (pl.measRate >> 8) & 0xFF;
-      buffer[1] = pl.measRate & 0xFF;
-      
-      buffer[2] = (pl.navRate >> 8) & 0xFF;
-      buffer[3] = pl.navRate & 0xFF;
-      
-      buffer[4] = (pl.timeRef >> 8) & 0xFF;
-      buffer[5] = pl.timeRef & 0xFF;
+      structToBuffer (buffer, 0, &pl.measRate);
+      structToBuffer (buffer, 2, &pl.navRate);
+      structToBuffer (buffer, 4, &pl.timeRef);
     };
     
   public:
@@ -207,17 +201,11 @@ class UbxCfgRate: public UbxPacket {
       h.length = 6;
       
       if (len == 14) {
-        pl.measRate  = buffer[7] << 8;
-        pl.measRate |= buffer[6];
+        bufferToStruct (buffer,  6, &pl.measRate);
+        bufferToStruct (buffer,  8, &pl.navRate);
+        bufferToStruct (buffer, 10, &pl.timeRef);
         
-        pl.navRate  = buffer[9] << 8;
-        pl.navRate |= buffer[8];
-        
-        pl.timeRef  = buffer[11] << 8;
-        pl.timeRef |= buffer[10];
-        
-        checksum  = buffer[12] << 8;
-        checksum |= buffer[13];
+        bufferToChecksum (buffer, 12, &checksum);
         
         valid = isChecksumValid (buffer, 2, h.length + 4, checksum);
       }
@@ -250,11 +238,10 @@ class UbxCfgRXM: public UbxPacket {
       h.length = 2;
       
       if (len == 10) {
-        pl.reserved1 = buffer[6];
-        pl.lpMode    = buffer[7];
+        bufferToStruct (buffer, 6, &pl.reserved1);
+        bufferToStruct (buffer, 7, &pl.lpMode);
         
-        checksum  = buffer[8] << 8;
-        checksum |= buffer[9];
+        bufferToChecksum (buffer, 8, &checksum);
         
         valid = isChecksumValid (buffer, 2, h.length + 4, checksum);
       }
@@ -297,21 +284,87 @@ class UbxCfgSBAS: public UbxPacket {
       h.length = 8;
       
       if (len == 16) {
-        pl.mode       = buffer[6];
-        pl.usage      = buffer[7];
-        pl.maxSBAS    = buffer[8];
-        pl.scanmode2  = buffer[9];
+        bufferToStruct (buffer, 6, &pl.mode);
+        bufferToStruct (buffer, 7, &pl.usage);
+        bufferToStruct (buffer, 8, &pl.maxSBAS);
+        bufferToStruct (buffer, 9, &pl.scanmode2);
         
-        pl.scanmode1[0] = buffer[10];
-        pl.scanmode1[1] = buffer[11];
-        pl.scanmode1[2] = buffer[12];
-        pl.scanmode1[3] = buffer[13];
+        bufferToStruct (buffer, 10, &pl.scanmode1[0]);
+        bufferToStruct (buffer, 11, &pl.scanmode1[1]);
+        bufferToStruct (buffer, 12, &pl.scanmode1[2]);
+        bufferToStruct (buffer, 13, &pl.scanmode1[3]);
         
-        checksum  = buffer[14] << 8;
-        checksum |= buffer[15];
+        bufferToChecksum (buffer, 14, &checksum);
         
         valid = isChecksumValid (buffer, 2, h.length + 4, checksum);
       }
     };
 };
+
+/* ************************************************************************* */
+struct UbxCfgPMPayload {
+  byte version = 0;
+  byte reserved1 = 0;
+  byte reserved2 = 0;
+  byte reserved3 = 0;
+  byte flags [4] = { 0 };
+  unsigned int updatePeriod = 0;
+  unsigned int searchPeriod = 0;
+  unsigned int gridOffset = 0;
+  unsigned short onTime = 0;
+  unsigned short minAcqTime = 0;
+};
+
+class UbxCfgPM: public UbxPacket {
+  private:
+    void payloadToArray (byte* buffer, unsigned short bLen) {
+      structToBuffer (buffer,  0, &pl.version);
+      structToBuffer (buffer,  1, &pl.reserved1);
+      structToBuffer (buffer,  2, &pl.reserved2);
+      structToBuffer (buffer,  3, &pl.reserved3);
+      structToBuffer (buffer,  4, &pl.flags[0]);
+      structToBuffer (buffer,  5, &pl.flags[1]);
+      structToBuffer (buffer,  6, &pl.flags[2]);
+      structToBuffer (buffer,  7, &pl.flags[3]);
+      structToBuffer (buffer,  8, &pl.updatePeriod);
+      structToBuffer (buffer, 12, &pl.searchPeriod);
+      structToBuffer (buffer, 16, &pl.gridOffset);
+      structToBuffer (buffer, 20, &pl.onTime);
+      structToBuffer (buffer, 22, &pl.minAcqTime);     
+    };
+    
+  public:
+    UbxCfgPMPayload pl;
+        
+    UbxCfgPM () {
+      h.msgClsID = UBX_CFG_PM;
+      h.length = 24;
+    };
+    
+    UbxCfgPM (byte* buffer, unsigned short len) {
+      h.msgClsID = UBX_CFG_PM;
+      h.length = 24;
+      
+      if (len == 32) {
+        bufferToStruct (buffer,  6, &pl.version);
+        bufferToStruct (buffer,  7, &pl.reserved1);
+        bufferToStruct (buffer,  8, &pl.reserved2);
+        bufferToStruct (buffer,  9, &pl.reserved3);
+        bufferToStruct (buffer, 10, &pl.flags[0]);
+        bufferToStruct (buffer, 11, &pl.flags[1]);
+        bufferToStruct (buffer, 12, &pl.flags[2]);
+        bufferToStruct (buffer, 13, &pl.flags[3]);
+        bufferToStruct (buffer, 14, &pl.updatePeriod);
+        bufferToStruct (buffer, 18, &pl.searchPeriod);
+        bufferToStruct (buffer, 22, &pl.gridOffset);
+        bufferToStruct (buffer, 26, &pl.onTime);
+        bufferToStruct (buffer, 28, &pl.minAcqTime);
+        
+        bufferToChecksum (buffer, 30, &checksum);
+        
+        valid = isChecksumValid (buffer, 2, h.length + 4, checksum);
+      }
+    };
+};
+
 #endif

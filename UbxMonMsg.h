@@ -43,8 +43,7 @@ class UbxMonVer: public UbxPacket {
       //   };
       // }
       
-      checksum  = buffer[len - 2] << 8;
-      checksum |= buffer[len - 1];
+      bufferToChecksum (buffer, len - 2, &checksum);
       
       valid = isChecksumValid (buffer, 2, h.length + 4, checksum);
     };

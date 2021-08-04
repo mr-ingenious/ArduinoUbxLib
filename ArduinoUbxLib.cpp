@@ -14,14 +14,13 @@ UbxGps::UbxGps () {
                    onReceive() method.
   ****************************************************************************/
 void UbxGps::handleUbxPacket () {
-  if (true) {
     UBX_LOGF (false, "handleUbxPacket: UBX binary [");
     for (unsigned short i = 0; i < parseInfo.payloadLen + 8; i++) {
       if (inBuf [i] < 0x10) {
         UBX_LOGF (false, "0");
       }
     
-      UBX_LOG (false,inBuf [i], HEX);
+      UBX_LOG (false, inBuf [i], HEX);
       UBX_LOGF (false, " ");
 
       if (i == 5) {
@@ -30,7 +29,6 @@ void UbxGps::handleUbxPacket () {
     }
     
     UBX_LOGF (true, "]");
-  }
   
   switch (parseInfo.msgClsID) {
     case UBX_ACK_ACK: {
@@ -137,6 +135,42 @@ void UbxGps::handleUbxPacket () {
         onReceive (&p);
       }}
       break;
+      
+    case UBX_NAV_CLOCK: {
+      UBX_LOGF (true, "handleUbxPacket: UBX_NAV_CLOCK found.");
+      UbxNavClock p = UbxNavClock (inBuf, parseInfo.payloadLen + 8);
+      if (p.valid) {
+        onReceive (&p);
+      }}
+      break;
+      
+    case UBX_NAV_DGPS: {
+      UBX_LOGF (true, "handleUbxPacket: UBX_NAV_DGPS found.");
+      UbxNavDGPS p = UbxNavDGPS (inBuf, parseInfo.payloadLen + 8);
+      if (p.valid) {
+        onReceive (&p);
+      }}
+      break;
+      
+    case UBX_NAV_DOP: {
+      UBX_LOGF (true, "handleUbxPacket: UBX_NAV_DOP found.");
+      UbxNavDOP p = UbxNavDOP (inBuf, parseInfo.payloadLen + 8);
+      if (p.valid) {
+        onReceive (&p);
+      }}
+      break;
+      
+    case UBX_CFG_PM: {
+      UBX_LOGF (true, "handleUbxPacket: UBX_CFG_PM found.");
+      UbxCfgPM p = UbxCfgPM (inBuf, parseInfo.payloadLen + 8);
+      if (p.valid) {
+        onReceive (&p);
+      }}
+      break;
+      
+    default:
+      UBX_LOGF (false, "UBX msg with unknown type detected, cls/msgid: ");
+      UBX_LOG (true, parseInfo.msgClsID, HEX);
   }
 };
 
@@ -284,14 +318,21 @@ void UbxGps::parse (byte data) {
       
     case PSTATE_UBX_PAYLOAD:
       // UBX_LOGF (true, "PSTATE_PAYLOAD: CK_A found.");
-      inBuf [6 + parseInfo.payloadLen] = data;
-      parseInfo.state = PSTATE_UBX_CHK_A;
+      if (6 + parseInfo.payloadLen < __inBufLen) {
+        inBuf [6 + parseInfo.payloadLen] = data;
+        parseInfo.state = PSTATE_UBX_CHK_A;
+      } else {
+          UBX_LOGF (true, "parse: PSTATE_UBX_PAYLOAD: msg length exceeds buffer length, reset.");
+          resetParser ();
+      }
       break;
       
     case PSTATE_UBX_CHK_A:
       // UBX_LOGF (true, "PSTATE_PAYLOAD: CK_B found.");
-      inBuf [7 + parseInfo.payloadLen] = data;        
-      handleUbxPacket ();
+      if (7 + parseInfo.payloadLen < __inBufLen) {
+        inBuf [7 + parseInfo.payloadLen] = data;        
+        handleUbxPacket ();
+      }
       // UBX_LOGF (true, "parse: PSTATE_UBX_CHK_A: msg complete, reset");
       resetParser ();
       break;
@@ -351,32 +392,40 @@ void UbxGps::parse (byte data) {
       break;
       
     case PSTATE_NMEA_PAYLOAD:
-      if (parseInfo.pbCount == __inBufLen - 1) {
-          UBX_LOGF (true, "parse: PSTATE_NMEA_PAYLOAD: msg length exceeds buffer length, reset.");
-          resetParser ();
-      } else {
+      if (parseInfo.pbCount < __inBufLen) {
         inBuf[parseInfo.pbCount++] = data;
         if (data == 0x0D) {
           parseInfo.state = PSTATE_NMEA_CR;
         }
+      } else {
+          UBX_LOGF (true, "parse: PSTATE_NMEA_PAYLOAD: msg length exceeds buffer length, reset.");
+          resetParser ();
       }
       break;
       
     case PSTATE_NMEA_CR:
-      inBuf[parseInfo.pbCount++] = data;
-      if  (data == 0x0A) {  // NMEA message complete
-          // reset parseInfo
-                      
-          if (parseInfo.isNMEA_PUBX) {
-              handleNMEA_PUBXMsg();
-          } else if (parseInfo.isNMEA_GP) {
-              handleNMEA_GPMsg();
-          }
-          
-          // UBX_LOGF (true, "parse: PSTATE_NMEA_CR: msg complete, reset");
+      if (parseInfo.pbCount < __inBufLen) {
+        inBuf[parseInfo.pbCount++] = data;
+        if  (data == 0x0A) {  // NMEA message complete
+            // reset parseInfo
+            if (parseInfo.isNMEA_PUBX) {
+                handleNMEA_PUBXMsg();
+            } else if (parseInfo.isNMEA_GP) {
+                handleNMEA_GPMsg();
+            }
+            
+            // UBX_LOGF (true, "parse: PSTATE_NMEA_CR: msg complete, reset");
+            resetParser ();
+        }
+      } else {
+          UBX_LOGF (true, "parse: PSTATE_NMEA_PAYLOAD: msg length exceeds buffer length, reset.");
           resetParser ();
       }
       break;
+      
+    default:
+      UBX_LOGF (true, "parse: unknown parser state, reset.");
+      resetParser ();
   }
   
   if (false) {

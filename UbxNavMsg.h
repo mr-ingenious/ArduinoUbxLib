@@ -32,28 +32,15 @@ class UbxNavStatus: public UbxPacket {
       h.length = 16;
       
       if (len == 24) {
-        pl.iTOW  = buffer[9] << 24;
-        pl.iTOW |= buffer[8] << 16;
-        pl.iTOW |= buffer[7] << 8;
-        pl.iTOW |= buffer[6];
+        bufferToStruct (buffer,  6, &pl.iTOW);
+        bufferToStruct (buffer, 10, &pl.gpsFix);
+        bufferToStruct (buffer, 11, &pl.flags);
+        bufferToStruct (buffer, 12, &pl.fixStat);
+        bufferToStruct (buffer, 13, &pl.flags2);
+        bufferToStruct (buffer, 14, &pl.ttff);
+        bufferToStruct (buffer, 18, &pl.msss);
         
-        pl.gpsFix  = buffer[10];
-        pl.flags   = buffer[11];
-        pl.fixStat = buffer[12];
-        pl.flags2  = buffer[13];
-        
-        pl.ttff  = buffer[17] << 24;
-        pl.ttff |= buffer[16] << 16;
-        pl.ttff |= buffer[15] << 8;
-        pl.ttff |= buffer[14];
-        
-        pl.msss  = buffer[21] << 24;
-        pl.msss |= buffer[20] << 16;
-        pl.msss |= buffer[19] << 8;
-        pl.msss |= buffer[18];
-        
-        checksum  = buffer[22] << 8;
-        checksum |= buffer[23];
+        bufferToChecksum (buffer, 22, &checksum);
         
         valid = isChecksumValid (buffer, 2, h.length + 4, checksum);
       }
@@ -85,43 +72,15 @@ class UbxNavPosLLH: public UbxPacket {
       h.length = 28;
       
       if (len == 36) {
-        pl.iTOW  = buffer[9] << 24;
-        pl.iTOW |= buffer[8] << 16;
-        pl.iTOW |= buffer[7] << 8;
-        pl.iTOW |= buffer[6];
-
-        pl.lon  = buffer[13] << 24;
-        pl.lon |= buffer[12] << 16;
-        pl.lon |= buffer[11] << 8;
-        pl.lon |= buffer[10];
+        bufferToStruct (buffer,  6, &pl.iTOW);
+        bufferToStruct (buffer, 10, &pl.lon);
+        bufferToStruct (buffer, 14, &pl.lat);
+        bufferToStruct (buffer, 18, &pl.height);
+        bufferToStruct (buffer, 22, &pl.hMSL);
+        bufferToStruct (buffer, 26, &pl.hAcc);
+        bufferToStruct (buffer, 30, &pl.vAcc);
         
-        pl.lat  = buffer[17] << 24;
-        pl.lat |= buffer[16] << 16;
-        pl.lat |= buffer[15] << 8;
-        pl.lat |= buffer[14];
-        
-        pl.height  = buffer[21] << 24;
-        pl.height |= buffer[20] << 16;
-        pl.height |= buffer[19] << 8;
-        pl.height |= buffer[18];
-        
-        pl.hMSL  = buffer[25] << 24;
-        pl.hMSL |= buffer[24] << 16;
-        pl.hMSL |= buffer[23] << 8;
-        pl.hMSL |= buffer[22];
-        
-        pl.hAcc  = buffer[29] << 24;
-        pl.hAcc |= buffer[28] << 16;
-        pl.hAcc |= buffer[27] << 8;
-        pl.hAcc |= buffer[26];
-        
-        pl.vAcc  = buffer[33] << 24;
-        pl.vAcc |= buffer[32] << 16;
-        pl.vAcc |= buffer[31] << 8;
-        pl.vAcc |= buffer[30];
-        
-        checksum  = buffer[34] << 8;
-        checksum |= buffer[35];
+        bufferToChecksum (buffer, 34, &checksum);
         
         valid = isChecksumValid (buffer, 2, h.length + 4, checksum);
       }
@@ -163,75 +122,25 @@ class UbxNavSol: public UbxPacket {
       h.length = 52;
       
       if (len == 60) {
-        pl.iTOW  = buffer[9] << 24;
-        pl.iTOW |= buffer[8] << 16;
-        pl.iTOW |= buffer[7] << 8;
-        pl.iTOW |= buffer[6];
-
-        pl.fTOW  = buffer[13] << 24;
-        pl.fTOW |= buffer[12] << 16;
-        pl.fTOW |= buffer[11] << 8;
-        pl.fTOW |= buffer[10];
+        bufferToStruct (buffer,  6, &pl.iTOW);
+        bufferToStruct (buffer, 10, &pl.fTOW);
+        bufferToStruct (buffer, 14, &pl.week);
+        bufferToStruct (buffer, 16, &pl.gpsFix);
+        bufferToStruct (buffer, 17, &pl.flags);
+        bufferToStruct (buffer, 18, &pl.ecefX);
+        bufferToStruct (buffer, 22, &pl.ecefY);
+        bufferToStruct (buffer, 26, &pl.ecefZ);
+        bufferToStruct (buffer, 30, &pl.pAcc);
+        bufferToStruct (buffer, 34, &pl.ecefVX);
+        bufferToStruct (buffer, 38, &pl.ecefVY);
+        bufferToStruct (buffer, 42, &pl.ecefVZ);
+        bufferToStruct (buffer, 46, &pl.sAcc);
+        bufferToStruct (buffer, 50, &pl.pDOP);
+        bufferToStruct (buffer, 52, &pl.reserved1);
+        bufferToStruct (buffer, 53, &pl.numSV);
+        bufferToStruct (buffer, 54, &pl.reserved2);
         
-        pl.week  = buffer[15] << 8;
-        pl.week |= buffer[14];
-        
-        pl.gpsFix = buffer[16];
-        pl.flags  = buffer[17];
-        
-        pl.ecefX  = buffer[21] << 24;
-        pl.ecefX |= buffer[20] << 16;
-        pl.ecefX |= buffer[19] << 8;
-        pl.ecefX |= buffer[18];
-        
-        pl.ecefY  = buffer[25] << 24;
-        pl.ecefY |= buffer[24] << 16;
-        pl.ecefY |= buffer[23] << 8;
-        pl.ecefY |= buffer[22];
-        
-        pl.ecefZ  = buffer[29] << 24;
-        pl.ecefZ |= buffer[28] << 16;
-        pl.ecefZ |= buffer[27] << 8;
-        pl.ecefZ |= buffer[26];
-        
-        pl.pAcc  = buffer[33] << 24;
-        pl.pAcc |= buffer[32] << 16;
-        pl.pAcc |= buffer[31] << 8;
-        pl.pAcc |= buffer[30];
-
-        pl.ecefVX  = buffer[37] << 24;
-        pl.ecefVX |= buffer[36] << 16;
-        pl.ecefVX |= buffer[35] << 8;
-        pl.ecefVX |= buffer[34];
-             
-        pl.ecefVY  = buffer[41] << 24;
-        pl.ecefVY |= buffer[40] << 16;
-        pl.ecefVY |= buffer[39] << 8;
-        pl.ecefVY |= buffer[38];
-             
-        pl.ecefVZ  = buffer[45] << 24;
-        pl.ecefVZ |= buffer[44] << 16;
-        pl.ecefVZ |= buffer[43] << 8;
-        pl.ecefVZ |= buffer[42];
-
-        pl.sAcc  = buffer[49] << 24;
-        pl.sAcc |= buffer[48] << 16;
-        pl.sAcc |= buffer[47] << 8;
-        pl.sAcc |= buffer[46];
-        
-        pl.pDOP  = buffer[51] << 8;
-        pl.pDOP |= buffer[50];
-        
-        pl.reserved1 = buffer[52];
-        pl.numSV     = buffer[53];
-        
-        pl.reserved2  = buffer[57] << 24;
-        pl.reserved2 |= buffer[56] << 16;
-        pl.reserved2 |= buffer[55] << 8;
-        pl.reserved2 |= buffer[54];
-        
-        checksum  = buffer[58] << 8;
-        checksum |= buffer[59];
+        bufferToChecksum (buffer, 58, &checksum);
         
         valid = isChecksumValid (buffer, 2, h.length + 4, checksum);
       }
@@ -241,9 +150,9 @@ class UbxNavSol: public UbxPacket {
 /* ************************************************************************* */
 struct UbxNavTimeGPSPayload {
   unsigned int iTOW = 0;
-    int fTOW = 0;
-    short week = 0;
-    byte leapS = 0;
+  int fTOW = 0;
+  short week = 0;
+  byte leapS = 0;
   byte valid = 0;
   unsigned short tAcc = 0;
 };
@@ -262,30 +171,14 @@ class UbxNavTimeGPS: public UbxPacket {
       h.length = 16;
 
       if (len == 24) {
-        pl.iTOW  = buffer[9] << 24;
-        pl.iTOW |= buffer[8] << 16;
-        pl.iTOW |= buffer[7] << 8;
-        pl.iTOW |= buffer[6];
-
-        pl.fTOW  = buffer[13] << 24;
-        pl.fTOW |= buffer[12] << 16;
-        pl.fTOW |= buffer[11] << 8;
-        pl.fTOW |= buffer[10];
+        bufferToStruct (buffer,  6, &pl.iTOW);
+        bufferToStruct (buffer, 10, &pl.fTOW);
+        bufferToStruct (buffer, 14, &pl.week);
+        bufferToStruct (buffer, 16, &pl.leapS);
+        bufferToStruct (buffer, 17, &pl.valid);
+        bufferToStruct (buffer, 18, &pl.tAcc);
         
-        pl.week  = buffer[15] << 8;
-        pl.week |= buffer[14];
-        
-        pl.leapS = buffer[16];
-        
-        pl.valid = buffer[17];
-        
-        pl.tAcc  = buffer[21] << 24;
-        pl.tAcc |= buffer[20] << 16;
-        pl.tAcc |= buffer[19] << 8;
-        pl.tAcc |= buffer[18];
-        
-        checksum  = buffer[22] << 8;
-        checksum |= buffer[23];
+        bufferToChecksum (buffer, 22, &checksum);
         
         valid = isChecksumValid (buffer, 2, h.length + 4, checksum);
       }
@@ -295,15 +188,15 @@ class UbxNavTimeGPS: public UbxPacket {
 /* ************************************************************************* */
 struct UbxNavTimeUTCPayload {
   unsigned int iTOW = 0;
-    unsigned int tAcc = 0;
-    int nano = 0;
-    unsigned short year = 0;
-    byte month = 0;
-    byte day = 0;
-    byte hour = 0;
-    byte min = 0;
-    byte sec = 0;
-    byte valid = 0;
+  unsigned int tAcc = 0;
+  int nano = 0;
+  unsigned short year = 0;
+  byte month = 0;
+  byte day = 0;
+  byte hour = 0;
+  byte min = 0;
+  byte sec = 0;
+  byte valid = 0;
 };
 
 class UbxNavTimeUTC: public UbxPacket {
@@ -320,33 +213,156 @@ class UbxNavTimeUTC: public UbxPacket {
       h.length = 20;
 
       if (len == 28) {
-        pl.iTOW  = buffer[9] << 24;
-        pl.iTOW |= buffer[8] << 16;
-        pl.iTOW |= buffer[7] << 8;
-        pl.iTOW |= buffer[6];
+        bufferToStruct (buffer,  6, &pl.iTOW);
+        bufferToStruct (buffer, 10, &pl.tAcc);
+        bufferToStruct (buffer, 14, &pl.nano);
+        bufferToStruct (buffer, 18, &pl.year);
+        bufferToStruct (buffer, 20, &pl.month);
+        bufferToStruct (buffer, 21, &pl.day);
+        bufferToStruct (buffer, 22, &pl.hour);
+        bufferToStruct (buffer, 23, &pl.min);
+        bufferToStruct (buffer, 24, &pl.sec);
+        bufferToStruct (buffer, 25, &pl.valid);
+        
+        bufferToChecksum (buffer, 26, &checksum);
+        
+        valid = isChecksumValid (buffer, 2, h.length + 4, checksum);
+      }
+    }  
+};
 
-        pl.tAcc  = buffer[13] << 24;
-        pl.tAcc |= buffer[12] << 16;
-        pl.tAcc |= buffer[11] << 8;
-        pl.tAcc |= buffer[10];
+/* ************************************************************************* */
+struct UbxNavClockPayload {
+  unsigned int iTOW = 0;
+  int clkB = 0;
+  int clkD = 0;
+  unsigned int tAcc = 0;
+  unsigned int fAcc = 0;
+};
+
+class UbxNavClock: public UbxPacket {
+  public:
+    UbxNavClockPayload pl;
+    
+    UbxNavClock () {
+      h.msgClsID = UBX_NAV_CLOCK;
+      h.length = 20;
+    }
+    
+    UbxNavClock (byte* buffer, unsigned short len) {
+      h.msgClsID = UBX_NAV_CLOCK;
+      h.length = 20;
+
+      if (len == 28) {
+        bufferToStruct (buffer,  6, &pl.iTOW);
+        bufferToStruct (buffer, 10, &pl.clkB);
+        bufferToStruct (buffer, 14, &pl.clkD);
+        bufferToStruct (buffer, 18, &pl.tAcc);
+        bufferToStruct (buffer, 22, &pl.fAcc);
         
-        pl.nano  = buffer[17] << 24;
-        pl.nano |= buffer[16] << 16;
-        pl.nano |= buffer[15] << 8;
-        pl.nano |= buffer[14];
+        bufferToChecksum (buffer, 26, &checksum);
         
-        pl.year  = buffer[19] << 8;
-        pl.year |= buffer[18];
+        valid = isChecksumValid (buffer, 2, h.length + 4, checksum);
+      }
+    }  
+};
+
+/* ************************************************************************* */
+struct UbxNavDGPSDataset {
+    byte svid = 0;
+    byte flags = 0;
+    unsigned short ageC = 0;
+    float prc = 0.0;
+    float prrc = 0.0;
+};
+
+const byte __MAX_DGPS_CHANNELS = 10;
+
+struct UbxNavDGPSPayload {
+  unsigned int iTOW = 0;
+  int age = 0;
+  short baseId = 0;
+  short baseHealth  = 0;
+  byte numCh = 0;
+  byte status = 0;
+  unsigned short reserved1 = 0;
+  UbxNavDGPSDataset channels [__MAX_DGPS_CHANNELS]; // TODO: we support only 10 channels
+                                                    //       how long can this possibly be?
+};
+
+class UbxNavDGPS: public UbxPacket {
+  public:
+    UbxNavDGPSPayload pl;
+    
+    UbxNavDGPS () {
+      h.msgClsID = UBX_NAV_DGPS;
+      h.length = 16; // minimum!
+    }
+    
+    UbxNavDGPS (byte* buffer, unsigned short len) {
+      h.msgClsID = UBX_NAV_DGPS;
+      h.length = 16; // minimum!
+
+      if (len >= 24) {
+        bufferToStruct (buffer,  6, &pl.iTOW);
+        bufferToStruct (buffer, 10, &pl.age);
+        bufferToStruct (buffer, 14, &pl.baseId);
+        bufferToStruct (buffer, 16, &pl.baseHealth);
+        bufferToStruct (buffer, 18, &pl.numCh);
+        bufferToStruct (buffer, 19, &pl.status);
+        bufferToStruct (buffer, 20, &pl.reserved1);
         
-        pl.month = buffer[20];
-        pl.day   = buffer[21];
-        pl.hour  = buffer[22];
-        pl.min   = buffer[23];
-        pl.sec   = buffer[24];
-        pl.valid = buffer[25];
+        for (byte ch = 0; ch < __MAX_DGPS_CHANNELS; ch++) {
+            bufferToStruct (buffer, 22 + (12 * ch), &pl.channels[ch].svid);
+            bufferToStruct (buffer, 23 + (12 * ch), &pl.channels[ch].flags);
+            bufferToStruct (buffer, 24 + (12 * ch), &pl.channels[ch].ageC);
+            bufferToStruct (buffer, 26 + (12 * ch), &pl.channels[ch].prc);
+            bufferToStruct (buffer, 30 + (12 * ch), &pl.channels[ch].prrc);
+        }        
         
-        checksum  = buffer[26] << 8;
-        checksum |= buffer[27];
+        bufferToChecksum (buffer, 22 + (12 * pl.numCh), &checksum);
+        
+        valid = isChecksumValid (buffer, 2, h.length + 4, checksum);
+      }
+    }  
+};
+
+/* ************************************************************************* */
+struct UbxNavDOPPayload {
+  unsigned int iTOW = 0;
+  unsigned short gDOP = 0;
+  unsigned short pDOP = 0;
+  unsigned short tDOP = 0;
+  unsigned short vDOP = 0;
+  unsigned short hDOP = 0;
+  unsigned short nDOP = 0;
+  unsigned short eDOP = 0;
+};
+
+class UbxNavDOP: public UbxPacket {
+  public:
+    UbxNavDOPPayload pl;
+    
+    UbxNavDOP () {
+      h.msgClsID = UBX_NAV_DOP;
+      h.length = 18;
+    }
+    
+    UbxNavDOP (byte* buffer, unsigned short len) {
+      h.msgClsID = UBX_NAV_DOP;
+      h.length = 18;
+
+      if (len == 26) {
+        bufferToStruct (buffer,  6, &pl.iTOW);
+        bufferToStruct (buffer, 10, &pl.gDOP);
+        bufferToStruct (buffer, 12, &pl.pDOP);
+        bufferToStruct (buffer, 14, &pl.tDOP);
+        bufferToStruct (buffer, 16, &pl.vDOP);
+        bufferToStruct (buffer, 18, &pl.hDOP);
+        bufferToStruct (buffer, 20, &pl.nDOP);
+        bufferToStruct (buffer, 22, &pl.eDOP);
+        
+        bufferToChecksum (buffer, 24, &checksum);
         
         valid = isChecksumValid (buffer, 2, h.length + 4, checksum);
       }

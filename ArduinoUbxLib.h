@@ -18,7 +18,7 @@
   Basic definitions
   ****************************************************************************/
 enum UbxParserStates {
-    PSTATE_INIT        = 0,
+    PSTATE_INIT         = 0,
     
     PSTATE_UBX_SYNC1    = 1, // first sync char found
     PSTATE_UBX_SYNC2    = 2, // second sync char found
