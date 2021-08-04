@@ -1,0 +1,21 @@
+#######################################
+# Syntax Coloring Map ArduinoUbxLib
+#######################################
+
+#######################################
+# Datatypes (KEYWORD1)
+#######################################
+
+UbxGps	  KEYWORD1	ArduinoUbxLib
+UbxPacket KEYWORD1	ArduinoUbxLib
+
+#######################################
+# Methods and Functions (KEYWORD2)
+#######################################
+parse        KEYWORD2
+onReceive    KEYWORD2
+setLogOutput KEYWORD2
+
+#######################################
+# Constants (LITERAL1)
+#######################################
