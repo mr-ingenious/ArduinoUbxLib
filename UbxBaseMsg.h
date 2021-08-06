@@ -50,8 +50,8 @@ enum UBX_NMEA_PACKET_TYPE {
 	UBX_NMEA_ZDA   = 0xF008  // Time and Date
 };
 
-enum UBX_PACKET_TYPE {
-	UBX_NONE          = 0,
+enum UBX_BIN_PACKET_TYPE {
+	UBX_UNDEFINED_MSGTYPE = 0,
 	
 	UBX_ACK_ACK       = 0x0501, // 2 Answer Message Acknowledged
 	UBX_ACK_NAK       = 0x0500, // 2 Answer Message Not_Acknowledged

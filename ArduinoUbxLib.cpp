@@ -13,165 +13,106 @@ UbxGps::UbxGps () {
                    objects of known messages to be handed over to the
                    onReceive() method.
   ****************************************************************************/
-void UbxGps::handleUbxPacket () {
-    UBX_LOGF (false, "handleUbxPacket: UBX binary [");
-    for (unsigned short i = 0; i < parseInfo.payloadLen + 8; i++) {
-      if (inBuf [i] < 0x10) {
-        UBX_LOGF (false, "0");
-      }
-    
-      UBX_LOG (false, inBuf [i], HEX);
-      UBX_LOGF (false, " ");
+byte UbxGps::handleUbxPacket () {
+    if (logOutput)  {
+      UBX_LOGF (false, "handleUbxPacket: UBX binary [");
+      for (unsigned short i = 0; i < parseInfo.payloadLen + 8; i++) {
+        if (inBuf [i] < 0x10) {
+          UBX_LOGF (false, "0");
+        }
+      
+        UBX_LOG (false, inBuf [i], HEX);
+        UBX_LOGF (false, " ");
 
-      if (i == 5) {
-        UBX_LOGF (false, " | ");
+        if (i == 5) {
+          UBX_LOGF (false, " | ");
+        }
       }
+      
+      UBX_LOGF (true, "]");
     }
     
-    UBX_LOGF (true, "]");
+    UbxPacket* packet = NULL;
+    byte res = UBX_NONE;
   
   switch (parseInfo.msgClsID) {
-    case UBX_ACK_ACK: {
-      // UBX_LOGF (true, "handleUbxPacket: UBX_ACK_ACK found.");        
-      UbxAckAck p = UbxAckAck (inBuf, parseInfo.payloadLen + 8);
-      
-      if (p.valid) {
-        onReceive (&p);
-      }}
+    case UBX_ACK_ACK:    
+      packet = new UbxAckAck (inBuf, parseInfo.payloadLen + 8);
       break;
       
-    case UBX_ACK_NAK: {
-      // UBX_LOGF (true, "handleUbxPacket: UBX_ACK_NAK found.");
-      UbxAckNak p = UbxAckNak (inBuf, parseInfo.payloadLen + 8);
-      if (p.valid) {
-        onReceive (&p);
-      }}
+    case UBX_ACK_NAK:
+      packet = new UbxAckNak (inBuf, parseInfo.payloadLen + 8);
       break;
       
-    case UBX_NAV_STATUS: {
-      // UBX_LOGF (true, "handleUbxPacket: UBX_NAV_STATUS found.");
-      UbxNavStatus p = UbxNavStatus (inBuf, parseInfo.payloadLen + 8);
-      if (p.valid) {
-        onReceive (&p);
-      }}
+    case UBX_NAV_STATUS:
+      packet = new UbxNavStatus (inBuf, parseInfo.payloadLen + 8);
       break;
       
-    case UBX_NAV_SOL: {
-      // UBX_LOGF (true, "handleUbxPacket: UBX_NAV_SOL found.");
-      UbxNavSol p = UbxNavSol (inBuf, parseInfo.payloadLen + 8);
-      if (p.valid) {
-        onReceive (&p);
-      }}
+    case UBX_NAV_SOL:
+      packet = new UbxNavSol (inBuf, parseInfo.payloadLen + 8);
       break;
       
-    case UBX_NAV_POSLLH: {
-      // UBX_LOGF (true, "handleUbxPacket: UBX_NAV_POSLLH found.");
-      UbxNavPosLLH p = UbxNavPosLLH (inBuf, parseInfo.payloadLen + 8);
-      if (p.valid) {
-        onReceive (&p);
-      }}
+    case UBX_NAV_POSLLH:
+      packet = new UbxNavPosLLH (inBuf, parseInfo.payloadLen + 8);
       break;
       
-    case UBX_NAV_TIMEUTC: {
-      // UBX_LOGF (true, "handleUbxPacket: UBX_NAV_TIMEUTC found.");
-      UbxNavTimeUTC p = UbxNavTimeUTC (inBuf, parseInfo.payloadLen + 8);
-      if (p.valid) {
-        onReceive (&p);
-      }}
+    case UBX_NAV_TIMEUTC:
+      packet = new UbxNavTimeUTC (inBuf, parseInfo.payloadLen + 8);
       break;
       
-    case UBX_NAV_TIMEGPS: {
-      // UBX_LOGF (true, "handleUbxPacket: UBX_NAV_TIMEUTC found.");
-      UbxNavTimeGPS p = UbxNavTimeGPS (inBuf, parseInfo.payloadLen + 8);
-      if (p.valid) {
-        onReceive (&p);
-      }}
+    case UBX_NAV_TIMEGPS:
+      packet = new UbxNavTimeGPS (inBuf, parseInfo.payloadLen + 8);
       break;
       
-    case UBX_CFG_NMEA: {
-      // UBX_LOGF (true, "handleUbxPacket: UBX_CFG_NMEA found.");
-      UbxCfgNMEA p = UbxCfgNMEA (inBuf, parseInfo.payloadLen + 8);
-      if (p.valid) {
-        onReceive (&p);
-      }}
+    case UBX_CFG_NMEA:
+      packet = new UbxCfgNMEA (inBuf, parseInfo.payloadLen + 8);
       break;
       
-    case UBX_CFG_RATE: {
-      // UBX_LOGF (true, "handleUbxPacket: UBX_CFG_RATE found.");
-      UbxCfgRate p = UbxCfgRate (inBuf, parseInfo.payloadLen + 8);
-      if (p.valid) {
-        onReceive (&p);
-      }}
+    case UBX_CFG_RATE:
+      packet = new UbxCfgRate (inBuf, parseInfo.payloadLen + 8);
       break;
       
-    case UBX_CFG_RXM: {
-      // UBX_LOGF (true, "handleUbxPacket: UBX_CFG_RXM found.");
-      UbxCfgRXM p = UbxCfgRXM (inBuf, parseInfo.payloadLen + 8);
-      if (p.valid) {
-        onReceive (&p);
-      }}
+    case UBX_CFG_RXM:
+      packet = new UbxCfgRXM (inBuf, parseInfo.payloadLen + 8);
       break;
       
-    case UBX_CFG_SBAS: {
-      // UBX_LOGF (true, "handleUbxPacket: UBX_CFG_SBAS found.");
-      UbxCfgSBAS p = UbxCfgSBAS (inBuf, parseInfo.payloadLen + 8);
-      if (p.valid) {
-        onReceive (&p);
-      }}
+    case UBX_MON_VER:
+      packet = new UbxMonVer (inBuf, parseInfo.payloadLen + 8);
       break;
       
-    case UBX_MON_VER: {
-      UBX_LOGF (true, "handleUbxPacket: UBX_MON_VER found.");
-      UbxMonVer p = UbxMonVer (inBuf, parseInfo.payloadLen + 8);
-      if (p.valid) {
-        onReceive (&p);
-      }}
+    case UBX_RXM_SVSI:
+      packet = new UbxRxmSVSI (inBuf, parseInfo.payloadLen + 8);
       break;
       
-    case UBX_RXM_SVSI: {
-      UBX_LOGF (true, "handleUbxPacket: UBX_RXM_SVSI found.");
-      UbxRxmSVSI p = UbxRxmSVSI (inBuf, parseInfo.payloadLen + 8);
-      if (p.valid) {
-        onReceive (&p);
-      }}
+    case UBX_NAV_CLOCK:
+      packet = new UbxNavClock (inBuf, parseInfo.payloadLen + 8);
       break;
       
-    case UBX_NAV_CLOCK: {
-      UBX_LOGF (true, "handleUbxPacket: UBX_NAV_CLOCK found.");
-      UbxNavClock p = UbxNavClock (inBuf, parseInfo.payloadLen + 8);
-      if (p.valid) {
-        onReceive (&p);
-      }}
+    case UBX_NAV_DGPS:
+      packet = new UbxNavDGPS (inBuf, parseInfo.payloadLen + 8);
       break;
       
-    case UBX_NAV_DGPS: {
-      UBX_LOGF (true, "handleUbxPacket: UBX_NAV_DGPS found.");
-      UbxNavDGPS p = UbxNavDGPS (inBuf, parseInfo.payloadLen + 8);
-      if (p.valid) {
-        onReceive (&p);
-      }}
+    case UBX_NAV_DOP:
+      packet = new UbxNavDOP (inBuf, parseInfo.payloadLen + 8);
       break;
       
-    case UBX_NAV_DOP: {
-      UBX_LOGF (true, "handleUbxPacket: UBX_NAV_DOP found.");
-      UbxNavDOP p = UbxNavDOP (inBuf, parseInfo.payloadLen + 8);
-      if (p.valid) {
-        onReceive (&p);
-      }}
-      break;
-      
-    case UBX_CFG_PM: {
-      UBX_LOGF (true, "handleUbxPacket: UBX_CFG_PM found.");
-      UbxCfgPM p = UbxCfgPM (inBuf, parseInfo.payloadLen + 8);
-      if (p.valid) {
-        onReceive (&p);
-      }}
+    case UBX_CFG_PM:
+      packet = new UbxCfgPM (inBuf, parseInfo.payloadLen + 8);
       break;
       
     default:
       UBX_LOGF (false, "UBX msg with unknown type detected, cls/msgid: ");
       UBX_LOG (true, parseInfo.msgClsID, HEX);
+      res = handleUnsupportedBinMsg (inBuf, parseInfo.payloadLen + 8);
   }
+  
+  if (NULL != packet && packet->valid) {
+      onReceive (packet);
+      delete packet;
+      res = UBX_BINMSG;
+  }
+  
+  return res;
 };
 
 /* ****************************************************************************
@@ -221,11 +162,10 @@ void UbxGps::handleNMEA_PUBXMsg () {
   ****************************************************************************/
 void UbxGps::resetParser () {
   parseInfo.state = PSTATE_INIT;
-  parseInfo.msgClsID = UBX_NONE;
+  parseInfo.msgClsID = UBX_UNDEFINED_MSGTYPE;
   parseInfo.pbCount = 0;
   parseInfo.payloadLen = 0;
-  parseInfo.isNMEA_PUBX = false;
-  parseInfo.isNMEA_PUBX = false;
+  parseInfo.msgType = UBX_NONE;
   
   memset (inBuf, 0, __inBufLen);
 }
@@ -235,8 +175,9 @@ void UbxGps::resetParser () {
          complete ubx message, a NMEA or PUBX string has been identified, the
          corresponding handle...() methods are called for further processing.
   ****************************************************************************/
-void UbxGps::parse (byte data) {
+byte UbxGps::parse (byte data) {
   const UbxParserStates lastState = parseInfo.state;
+  byte res = UBX_NONE;
   
   switch (parseInfo.state) {
     case PSTATE_INIT:
@@ -331,7 +272,7 @@ void UbxGps::parse (byte data) {
       // UBX_LOGF (true, "PSTATE_PAYLOAD: CK_B found.");
       if (7 + parseInfo.payloadLen < __inBufLen) {
         inBuf [7 + parseInfo.payloadLen] = data;        
-        handleUbxPacket ();
+        res = handleUbxPacket ();
       }
       // UBX_LOGF (true, "parse: PSTATE_UBX_CHK_A: msg complete, reset");
       resetParser ();
@@ -353,7 +294,7 @@ void UbxGps::parse (byte data) {
       inBuf[parseInfo.pbCount++] = data;
       if  (data == 'P') {
         parseInfo.state = PSTATE_NMEA_PAYLOAD;
-        parseInfo.isNMEA_GP = true;
+        parseInfo.msgType = UBX_GPMSG;
       } else {
         UBX_LOGF (true, "parse: PSTATE_NMEA_IDGP1: unexpected character, reset.");
         resetParser ();
@@ -384,7 +325,7 @@ void UbxGps::parse (byte data) {
       inBuf[parseInfo.pbCount++] = data;
       if  (data == 'X') {
         parseInfo.state = PSTATE_NMEA_PAYLOAD;
-        parseInfo.isNMEA_PUBX = true;
+        parseInfo.msgType = UBX_PUBXMSG;
       } else {
         UBX_LOGF (true, "parse: PSTATE_NMEA_IDB: unexpected character, reset.");
         resetParser ();
@@ -408,11 +349,13 @@ void UbxGps::parse (byte data) {
         inBuf[parseInfo.pbCount++] = data;
         if  (data == 0x0A) {  // NMEA message complete
             // reset parseInfo
-            if (parseInfo.isNMEA_PUBX) {
+            if (parseInfo.msgType == UBX_PUBXMSG) {
                 handleNMEA_PUBXMsg();
-            } else if (parseInfo.isNMEA_GP) {
+            } else if (parseInfo.msgType == UBX_GPMSG) {
                 handleNMEA_GPMsg();
             }
+            
+            res = parseInfo.msgType;
             
             // UBX_LOGF (true, "parse: PSTATE_NMEA_CR: msg complete, reset");
             resetParser ();
@@ -434,4 +377,6 @@ void UbxGps::parse (byte data) {
     UBX_LOGF (false, " --> ");
     UBX_LOG (true, parseInfo.state);
   }
+  
+  return res;
 };

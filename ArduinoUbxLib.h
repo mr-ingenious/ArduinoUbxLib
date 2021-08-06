@@ -44,13 +44,14 @@ enum UbxParserStates {
     PSTATE_NMEA_LF      = 28  // Linefeed --> NMEA message complete
 };
   
+enum UBX_PARSER_PACKETTYPE {UBX_NONE = 0, UBX_BINMSG = 1, UBX_GPMSG = 2, UBX_PUBXMSG = 3, UBX_UNSUPPORTED_MSG = 10};
+  
 struct UbxParserInfo {
     UbxParserStates state = PSTATE_INIT;
     unsigned short pbCount = 0; // payload bytes count
     unsigned short payloadLen = 0;
-    unsigned short msgClsID = UBX_NONE;
-    bool isNMEA_GP = false;
-    bool isNMEA_PUBX = false;
+    unsigned short msgClsID = UBX_UNDEFINED_MSGTYPE;
+    byte msgType = UBX_NONE;
 };
 
 const unsigned short __inBufLen = 500;
@@ -63,14 +64,15 @@ class UbxGps {
     UbxParserInfo parseInfo;
     byte inBuf[__inBufLen] = { 0 };
     
-    void resetParser ();
-
-    void handleUbxPacket ();
-    void handleNMEA_GPMsg ();
-    void handleNMEA_PUBXMsg ();
-    
   protected:
     bool logOutput = false;
+    
+    void resetParser ();
+
+    byte handleUbxPacket ();
+    virtual byte handleUnsupportedBinMsg (byte* buffer, unsigned short len) { return UBX_UNSUPPORTED_MSG; };
+    void handleNMEA_GPMsg ();
+    void handleNMEA_PUBXMsg ();
     
     void setLogOutput (bool newLogOutput) {
         logOutput = newLogOutput;
@@ -79,8 +81,8 @@ class UbxGps {
   public:
     UbxGps ();
     
-    void parse (byte data);
-    virtual void onReceive (UbxPacket * p) {};
+    byte parse (byte data);
+    virtual void onReceive (UbxPacket* p) {};
     virtual void onReceive (char* nmeaMsg, unsigned short mLen) {};
 };
 

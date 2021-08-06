@@ -182,10 +182,12 @@ class MyGps: public UbxGps {
         }
       }
 
+      /*
       if (millis() - lastUbxReceivedTs > 10000) {
         Serial.print ("checkState: resetting messages configuration ...");
         startSequence();
       }
+      */
     };
 
     void onReceive (UbxPacket* packet) {
