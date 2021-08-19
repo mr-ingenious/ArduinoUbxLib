@@ -29,7 +29,7 @@ enum UbxParserStates {
     PSTATE_UBX_PAYLOAD  = 7,
     PSTATE_UBX_CHK_A    = 8,
                         
-    PSTATE_NMEA_SYNC    = 20, // $ char
+    PSTATE_NMEA_SYNC    = 20, // $ char, start of NMEA strings
                         
     PSTATE_NMEA_IDGP1   = 21, // NMEA GP ...
                         
@@ -44,7 +44,11 @@ enum UbxParserStates {
     PSTATE_NMEA_LF      = 28  // Linefeed --> NMEA message complete
 };
   
-enum UBX_PARSER_PACKETTYPE {UBX_NONE = 0, UBX_BINMSG = 1, UBX_GPMSG = 2, UBX_PUBXMSG = 3, UBX_UNSUPPORTED_MSG = 10};
+enum UBX_PARSER_PACKETTYPE {UBX_NONE = 0, 
+                            UBX_BINMSG = 1,
+                            UBX_GPMSG = 2,
+                            UBX_PUBXMSG = 3,
+                            UBX_UNSUPPORTED_MSG = 10};
   
 struct UbxParserInfo {
     UbxParserStates state = PSTATE_INIT;
@@ -71,6 +75,7 @@ class UbxGps {
 
     byte handleUbxPacket ();
     virtual byte handleUnsupportedBinMsg (byte* buffer, unsigned short len) { return UBX_UNSUPPORTED_MSG; };
+    
     void handleNMEA_GPMsg ();
     void handleNMEA_PUBXMsg ();
     

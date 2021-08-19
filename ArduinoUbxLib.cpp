@@ -11,7 +11,9 @@ UbxGps::UbxGps () {
 /* ****************************************************************************
   handleUbxPacket: analyzes the information the parser collected and creates
                    objects of known messages to be handed over to the
-                   onReceive() method.
+                   onReceive() method. If the message is unknown, it is handed
+                   over to the handleUnsupportedBinMsg () method for further
+                   processing.
   ****************************************************************************/
 byte UbxGps::handleUbxPacket () {
     if (logOutput)  {
@@ -110,6 +112,12 @@ byte UbxGps::handleUbxPacket () {
       onReceive (packet);
       delete packet;
       res = UBX_BINMSG;
+  } else {
+      if (NULL == packet) {
+          UBX_LOGF (true, "packet is NULL! ");
+      } else if (!packet->valid) {
+          UBX_LOGF (true, "packet invalid! ");
+      }
   }
   
   return res;
